@@ -3,9 +3,11 @@ import { NavLink } from 'react-router-dom';
 import { LayoutDashboard, History, Activity, Info, TrendingUp, BrainCircuit, Bell } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import useMLStore from '../../store/useMLStore';
+import { useStore } from '../../store/useStore';
 
 export function Sidebar({ isOpen, setIsOpen }) {
   const { mlForecast } = useMLStore();
+  const { pipelineNowcast } = useStore();
   const t30Class = mlForecast?.horizons?.[1]?.predicted_class;
   const navItems = [
     { name: 'Dashboard', path: '/', icon: LayoutDashboard },
@@ -96,10 +98,21 @@ export function Sidebar({ isOpen, setIsOpen }) {
         </nav>
 
         {/* Footer info */}
-        <div className="p-4 border-t-[1px] border-[rgba(255,107,0,0.15)] shrink-0">
+        <div className="p-4 border-t-[1px] border-[rgba(255,107,0,0.15)] shrink-0 flex flex-col gap-2">
           <div className="flex items-center justify-between">
             <span className="font-mono text-[10px] text-text-secondary">SYSTEM ID</span>
             <span className="font-mono text-[10px] text-accent-orange">ISRO-CS-04</span>
+          </div>
+          <div className="border-t border-[rgba(255,107,0,0.1)] pt-2 text-[9px] font-mono leading-relaxed">
+            {pipelineNowcast?.is_real_data ? (
+              <span className="text-[#00E5A0]">
+                ● REAL DATA · SoLEXS + HEL1OS · Gannon Storm May 2024
+              </span>
+            ) : (
+              <span className="text-[#FFB347]">
+                ◐ DEMO DATA · Scientifically accurate reconstruction
+              </span>
+            )}
           </div>
         </div>
 

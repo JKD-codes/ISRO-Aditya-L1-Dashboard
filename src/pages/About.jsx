@@ -187,7 +187,37 @@ export function About() {
         </div>
       </div>
 
-      {/* SECTION C: TEAM & PROBLEM STATEMENT */}
+      {/* SECTION C: ALGORITHM BREAKDOWN */}
+      <Card title="DETECTION ALGORITHM: NEUPERT EFFECT PIPELINE">
+        <div className="flex flex-col gap-4 text-xs font-sans leading-relaxed">
+          <p className="text-text-secondary">
+            The automated algorithmic pipeline processes SoLEXS and HEL1OS measurements in real time to classify and detect flare onset using the <strong>Neupert Effect</strong> physics model:
+          </p>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-[#020B18]/50 border border-border-subtle/30 rounded p-4 font-mono text-[11px] text-text-primary">
+            <div className="flex flex-col gap-2">
+              <div><span className="text-accent-orange font-bold">STEP 1:</span> Load SoLEXS time-series (2-22 keV soft X-ray flux)</div>
+              <div><span className="text-accent-orange font-bold">STEP 2:</span> Load HEL1OS time-series (10-150 keV hard X-ray counts)</div>
+              <div><span className="text-accent-orange font-bold">STEP 3:</span> Resample to common 1-minute time grid (scipy interpolation)</div>
+              <div><span className="text-accent-orange font-bold">STEP 4:</span> Smooth with 5-point uniform filter (scipy.ndimage)</div>
+              <div><span className="text-accent-orange font-bold">STEP 5:</span> Peak detection on both channels (scipy.signal.find_peaks)</div>
+            </div>
+            <div className="flex flex-col gap-2">
+              <div><span className="text-accent-orange font-bold">STEP 6:</span> Compute temporal offset Δt = t(HEL1OS_peak) - t(SoLEXS_peak)</div>
+              <div><span className="text-accent-orange font-bold">STEP 7:</span> Neupert Effect confirmed if -30min &le; &Delta;t &le; -1min</div>
+              <div><span className="text-accent-orange font-bold">STEP 8:</span> Cross-correlate dSXR/dt with HEL1OS as confidence metric</div>
+              <div><span className="text-accent-orange font-bold">STEP 9:</span> Classify flare class from SoLEXS peak flux</div>
+              <div><span className="text-accent-orange font-bold">STEP 10:</span> Output JSON with detection result and confidence score</div>
+            </div>
+          </div>
+
+          <div className="text-[10px] font-mono text-text-secondary border-t border-[rgba(255,107,0,0.12)] pt-2">
+            Reference: Neupert (1968) ApJ 153, L59 · Dennis & Zarro (1993) Sol.Phys. 146, 177
+          </div>
+        </div>
+      </Card>
+
+      {/* SECTION D: TEAM & PROBLEM STATEMENT */}
       <Card title="TEAM & HACKATHON MISSION">
         <div className="flex flex-col gap-3 text-xs leading-relaxed font-sans">
           <div>

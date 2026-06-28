@@ -30,7 +30,13 @@ export default {
       fontFamily: {
         sans: ['Inter', 'sans-serif'],
         mono: ['"JetBrains Mono"', 'monospace'],
-        display: ['"Space Grotesk"', 'sans-serif'],
+        display: ['"Chakra Petch"', 'sans-serif'],
+        telemetry: ['"Rajdhani"', 'sans-serif'],
+        header: ['"Exo 2"', 'sans-serif'],
+      },
+      backgroundImage: {
+        'panel-gradient': 'linear-gradient(180deg, rgba(7, 30, 61, 0.4) 0%, rgba(4, 20, 40, 0.8) 100%)',
+        'alert-gradient': 'linear-gradient(90deg, rgba(255,59,59,0.15) 0%, rgba(255,59,59,0) 100%)',
       },
       keyframes: {
         pulseDot: {

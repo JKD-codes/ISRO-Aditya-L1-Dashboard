@@ -80,13 +80,14 @@ export function TopNav() {
               e.target.value = '';
             }
           }}
-          className="bg-[#FF6B00]/10 border border-[#FF6B00]/30 text-[#FF6B00] font-mono text-[10px] tracking-widest px-2 py-1 rounded-sm outline-none cursor-pointer hover:bg-[#FF6B00]/20 transition-colors"
+          className="bg-[#FF6B00]/10 border border-[#FF6B00]/30 text-[#FF6B00] font-mono text-[10px] tracking-widest px-2 py-1 rounded-sm outline-none cursor-pointer hover:bg-[#FF6B00]/20 transition-colors appearance-none"
+          style={{ WebkitAppearance: 'none', MozAppearance: 'none' }}
         >
-          <option value="">SIMULATE FLARE</option>
-          <option value="M2.0">M2.0</option>
-          <option value="M5.2">M5.2</option>
-          <option value="X1.0">X1.0</option>
-          <option value="X3.5">X3.5</option>
+          <option value="" className="bg-[#020B18] text-[#FF6B00]">SIMULATE FLARE ▾</option>
+          <option value="M2.0" className="bg-[#020B18] text-[#FFB347]">M2.0</option>
+          <option value="M5.2" className="bg-[#020B18] text-[#FF6B00]">M5.2</option>
+          <option value="X1.0" className="bg-[#020B18] text-[#FF3B3B]">X1.0</option>
+          <option value="X3.5" className="bg-[#020B18] text-[#FF0000]">X3.5</option>
         </select>
 
         <div className="flex items-center gap-1.5 px-3 py-1 rounded-sm border bg-[#020B18] border-border-subtle">

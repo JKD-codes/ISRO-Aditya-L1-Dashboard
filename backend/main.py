@@ -1,13 +1,16 @@
-from fastapi import FastAPI, Response
+from fastapi import FastAPI, Response, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 import httpx
 from cachetools import TTLCache
 import asyncio
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 import random
 from aditya_parser import parse_solexs_fits, parse_helios_fits
 from flare_detector import detect_flares
 from ml_model import predict, get_model
+import json
+from pathlib import Path
+from pipeline.detect_flares import SolarFlareDetector
 
 # Ensure model is trained on startup
 get_model()
@@ -26,6 +29,20 @@ app.add_middleware(
 # In-memory cache: maxsize 100 items, TTL 55 seconds
 cache = TTLCache(maxsize=100, ttl=55)
 
+pipeline_cache = {"nowcast": None, "forecast": None, "last_run": None}
+
+@app.on_event("startup")
+async def run_pipeline_on_startup():
+    try:
+        detector = SolarFlareDetector()
+        pipeline_cache["nowcast"] = detector.run_nowcast()
+        detector2 = SolarFlareDetector()
+        pipeline_cache["forecast"] = detector2.run_forecast()
+        pipeline_cache["last_run"] = datetime.now(timezone.utc).isoformat()
+        print("Pipeline executed on startup successfully.")
+    except Exception as e:
+        print(f"Error executing pipeline on startup: {e}")
+
 async def fetch_noaa(url: str, cache_key: str):
     if cache_key in cache:
         return cache[cache_key]
@@ -39,7 +56,6 @@ async def fetch_noaa(url: str, cache_key: str):
 
 @app.get("/api/goes/realtime")
 async def get_goes_realtime():
-    # Keep compatibility with old calls
     url = "https://services.swpc.noaa.gov/json/goes/primary/xrays-1-day.json"
     return await fetch_noaa(url, "goes_realtime")
 
@@ -51,9 +67,6 @@ async def get_goes_xrays():
         url = "https://services.swpc.noaa.gov/json/goes/primary/xrays-1-day.json"
         data = await fetch_noaa(url, "goes_xrays")
         
-        if data:
-            print(f"GOES data sample: {data[0]}")
-            
         now = datetime.utcnow()
         three_hours_ago = now - timedelta(hours=3)
         
@@ -68,7 +81,6 @@ async def get_goes_xrays():
 
 @app.get("/api/goes/flares")
 async def get_goes_flares():
-    # 7-day rolling window as requested in Section 1.2 & 3.3
     url = "https://services.swpc.noaa.gov/json/goes/primary/xray-flares-7-day.json"
     return await fetch_noaa(url, "goes_flares")
 
@@ -124,36 +136,51 @@ async def get_solar_cycle():
     url = "https://services.swpc.noaa.gov/json/solar-cycle/observed-solar-cycle-indices.json"
     return await fetch_noaa(url, "solar_cycle")
 
+@app.get("/api/pipeline/nowcast")
+async def get_nowcast():
+    if pipeline_cache["nowcast"] is None:
+        raise HTTPException(503, "Pipeline not initialized")
+    return pipeline_cache["nowcast"]
+
+@app.get("/api/pipeline/forecast")
+async def get_forecast():
+    if pipeline_cache["forecast"] is None:
+        raise HTTPException(503, "Pipeline not initialized")
+    return pipeline_cache["forecast"]
+
+@app.get("/api/pipeline/run")
+async def run_pipeline_fresh():
+    detector = SolarFlareDetector()
+    nowcast = detector.run_nowcast()
+    detector2 = SolarFlareDetector()
+    forecast = detector2.run_forecast()
+    pipeline_cache["nowcast"] = nowcast
+    pipeline_cache["forecast"] = forecast
+    pipeline_cache["last_run"] = datetime.now(timezone.utc).isoformat()
+    return {"nowcast": nowcast, "forecast": forecast,
+            "last_run": pipeline_cache["last_run"]}
+
 @app.get("/api/aditya/solexs")
-async def get_aditya_solexs():
-    data = parse_solexs_fits()
-    return {
-        "metadata": {
-            "instrument": "SoLEXS",
-            "mode": "OBSERVATION",
-            "energy_range": "2-22 keV",
-            "last_observation": "2024-05-10T12:00:00Z",
-            "telemetry_status": "NOMINAL"
-        },
-        "data": data
-    }
+async def get_solexs():
+    # If the parsed JSON file exists, serve it, otherwise run detector fallback
+    path = Path("data/processed/solexs_20240510.json")
+    if not path.exists():
+        detector = SolarFlareDetector()
+        detector.load_data()
+        return detector.solexs_data
+    return json.loads(path.read_text())
 
 @app.get("/api/aditya/helios")
-async def get_aditya_helios():
-    data = parse_helios_fits()
-    return {
-        "metadata": {
-            "instrument": "HEL1OS",
-            "mode": "EVENT_MODE",
-            "detector_temp": "-40.5 C",
-            "last_trigger": "2024-05-10T11:00:00Z",
-            "telemetry_status": "NOMINAL"
-        },
-        "data": data
-    }
+async def get_helios():
+    path = Path("data/processed/helios_20240510.json")
+    if not path.exists():
+        detector = SolarFlareDetector()
+        detector.load_data()
+        return detector.helios_data
+    return json.loads(path.read_text())
 
 @app.get("/api/nowcast")
-async def get_nowcast():
+async def get_nowcast_local():
     solexs_data = parse_solexs_fits()
     helios_data = parse_helios_fits()
     flares = detect_flares(solexs_data, helios_data)
@@ -165,7 +192,7 @@ async def get_nowcast():
     }
 
 @app.get("/api/forecast")
-async def get_forecast():
+async def get_forecast_local():
     solexs_data = parse_solexs_fits()
     helios_data = parse_helios_fits()
     

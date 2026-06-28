@@ -3,7 +3,7 @@ import { API_BASE, SDO_URL } from '../config';
 
 const api = axios.create({
   baseURL: `${API_BASE}/api`,
-  timeout: 10000,
+  timeout: 3000,
 });
 
 export const getGoesRealtime = async () => {
@@ -51,19 +51,40 @@ export const getSdoLatestUrl = () => {
 };
 
 export const checkApiHealth = async () => {
-  const { data } = await api.get('/health', { timeout: 3000 });
-  return data;
+  try {
+    const { data } = await api.get('/health', { timeout: 2000 });
+    return data;
+  } catch (e) {
+    return null;
+  }
 };
 
-export const getAdityaSolexs = async () => {
-  const { data } = await api.get('/aditya/solexs');
-  return data;
-};
+export async function fetchNowcast() {
+  const res = await fetch(`${API_BASE}/api/pipeline/nowcast`);
+  if (!res.ok) throw new Error('Pipeline offline');
+  return res.json();
+}
 
-export const getAdityaHelios = async () => {
-  const { data } = await api.get('/aditya/helios');
-  return data;
-};
+export async function fetchForecast() {
+  const res = await fetch(`${API_BASE}/api/pipeline/forecast`);
+  if (!res.ok) throw new Error('Pipeline offline');
+  return res.json();
+}
+
+export async function fetchSoLEXS() {
+  const res = await fetch(`${API_BASE}/api/aditya/solexs`);
+  if (!res.ok) throw new Error('SoLEXS data unavailable');
+  return res.json();
+}
+
+export async function fetchHEL1OS() {
+  const res = await fetch(`${API_BASE}/api/aditya/helios`);
+  if (!res.ok) throw new Error('HEL1OS data unavailable');
+  return res.json();
+}
+
+// Keep compatible aliases for stores
+export const getAdityaSolexs = fetchSoLEXS;
+export const getAdityaHelios = fetchHEL1OS;
 
 export default api;
-

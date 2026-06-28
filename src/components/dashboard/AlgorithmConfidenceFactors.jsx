@@ -1,105 +1,47 @@
 import React, { useMemo } from 'react';
 import { Card } from '../ui/Card';
 import { useStore } from '../../store/useStore';
-import { useQuery } from '@tanstack/react-query';
-import { getGoesFlares } from '../../services/api';
 
 export function AlgorithmConfidenceFactors() {
-  const { goesData, activeRegions, demoActive } = useStore();
-
-  // Fetch 7-day flares list using cached React Query
-  const { data: flares } = useQuery({
-    queryKey: ['goesFlares'],
-    queryFn: getGoesFlares,
-    refetchInterval: 300000,
-  });
+  const { pipelineNowcast } = useStore();
 
   const confidenceData = useMemo(() => {
+    const detection = pipelineNowcast?.detection;
+    
     // 1. Flux Level
-    let flux = 1e-8;
-    if (demoActive) {
-      flux = 5.2e-5;
-    } else if (goesData && goesData.length > 0) {
-      const channelB = goesData.filter(d => d.energy === '0.1-0.8nm' || d.energy_band === '0.1-0.8nm');
-      const points = channelB.length > 0 ? channelB : goesData;
-      flux = points[points.length - 1]?.flux || 1e-8;
-    }
-    const logFlux = Math.log10(flux);
-    const fluxPct = Math.max(10, Math.min(100, Math.round(((logFlux + 9) / 6) * 100)));
-    const getFluxColor = (pct) => {
-      if (pct >= 66) return '#FF3B3B'; // Red for warning/alert flux
-      if (pct >= 33) return '#FFB347'; // Amber for elevated flux
-      return '#00E5A0'; // Green for nominal flux
+    const fluxRatio = pipelineNowcast?.flux_ratio ?? 1.0;
+    const fluxPct = Math.max(5, Math.min(100, Math.round((fluxRatio / 100) * 100))); 
+    const getFluxColor = (ratio) => {
+      if (ratio >= 50) return '#FF3B3B'; // Severe rise
+      if (ratio >= 5) return '#FFB347'; // Moderate rise
+      return '#00E5A0'; // Nominal
     };
+    const fluxColor = getFluxColor(fluxRatio);
 
-    // 2. Rate of Rise (last 10 minutes)
-    let rateOfRise = 0;
-    if (demoActive) {
-      rateOfRise = 2.5e-8;
-    } else if (goesData && goesData.length >= 10) {
-      const channelB = goesData.filter(d => d.energy === '0.1-0.8nm' || d.energy_band === '0.1-0.8nm');
-      const points = channelB.length >= 10 ? channelB.slice(-10) : goesData.slice(-10);
-      if (points.length >= 2) {
-        const startFlux = points[0].flux || 1e-8;
-        const endFlux = points[points.length - 1].flux || 1e-8;
-        rateOfRise = (endFlux - startFlux) / (points.length * 60);
-      }
-    }
-    const risePct = Math.max(10, Math.min(100, Math.round((Math.abs(rateOfRise) / 1e-8) * 100)));
-    const riseColor = rateOfRise > 0 ? '#FFB347' : '#4FC3F7'; // Amber if rising, blue if falling
+    // 2. Rate of Rise
+    const riseRate = detection?.rise_rate_wm2_per_min ?? 0;
+    // Map log-scale or simple scaling for percentage
+    const risePct = Math.max(0, Math.min(100, Math.round((riseRate / 1e-5) * 100)));
+    const riseColor = riseRate > 0 ? '#FFB347' : '#4FC3F7';
 
-    // 3. Active Region Complexity
-    let maxComplexityPct = 10;
-    let complexityLabel = 'Alpha';
-    let complexityColor = '#8FA3C0';
+    // 3. Neupert Check
+    const neupertConfirmed = detection?.neupert_confirmed ?? false;
+    const neupertPct = neupertConfirmed ? 100 : 0;
+    const neupertColor = neupertConfirmed ? '#00E5A0' : '#FF3B3B';
+    const neupertLabel = neupertConfirmed ? 'CONFIRMED' : 'NO DELAY DETECTED';
 
-    if (activeRegions && activeRegions.length > 0) {
-      activeRegions.forEach(r => {
-        const mag = String(r.mag || r.Mag || 'Alpha');
-        if (mag.includes('Delta') && maxComplexityPct < 100) {
-          maxComplexityPct = 100;
-          complexityLabel = 'Beta-Gamma-Delta';
-          complexityColor = '#FF3B3B';
-        } else if (mag.includes('Gamma') && maxComplexityPct < 70) {
-          maxComplexityPct = 70;
-          complexityLabel = 'Beta-Gamma';
-          complexityColor = '#FFB347';
-        } else if (mag.includes('Beta') && maxComplexityPct < 40) {
-          maxComplexityPct = 40;
-          complexityLabel = 'Beta';
-          complexityColor = '#4FC3F7';
-        }
-      });
-    } else if (demoActive) {
-      maxComplexityPct = 100;
-      complexityLabel = 'Beta-Gamma-Delta';
-      complexityColor = '#FF3B3B';
-    }
-
-    // 4. Historical Context (24h count)
-    let flareCount24h = 2;
-    if (demoActive) {
-      flareCount24h = 6;
-    } else if (flares && flares.length > 0) {
-      const now = Date.now();
-      const dayAgo = now - 24 * 3600 * 1000;
-      const count = flares.filter(f => {
-        const tStr = f.begin_time || f.peak_time || f.max_time;
-        if (!tStr) return false;
-        return new Date(tStr).getTime() >= dayAgo;
-      }).length;
-      flareCount24h = count > 0 ? count : 2;
-    }
-    const historyPct = Math.max(10, Math.min(100, flareCount24h * 15));
-    const historyColor = flareCount24h > 3 ? '#FFB347' : '#4FC3F7';
+    // 4. Cross Correlation
+    const crossCorr = detection?.cross_correlation_dsxr_hxr ?? 0;
+    const crossPct = Math.max(0, Math.min(100, Math.round(crossCorr * 100)));
+    const crossColor = crossCorr > 0.6 ? '#00E5A0' : crossCorr > 0.3 ? '#FFB347' : '#FF3B3B';
 
     return [
-      { name: 'Flux Level', value: fluxPct, label: flux.toExponential(1) + ' W/m²', color: getFluxColor(fluxPct) },
-      { name: 'Rate of Rise', value: risePct, label: rateOfRise > 0 ? 'RISING' : 'STABLE', color: riseColor },
-      { name: 'Active Region Complexity', value: maxComplexityPct, label: complexityLabel, color: complexityColor },
-      { name: 'Historical Context (24h)', value: historyPct, label: `${flareCount24h} Flares`, color: historyColor }
+      { name: 'Flux Level (Ratio)', value: fluxPct, label: `${fluxRatio.toFixed(1)}x`, color: fluxColor },
+      { name: 'Rate of Rise', value: risePct, label: riseRate > 0 ? `${riseRate.toExponential(1)} W/m²/m` : 'STABLE', color: riseColor },
+      { name: 'Neupert Check', value: neupertPct, label: neupertLabel, color: neupertColor },
+      { name: 'Cross-Correlation (dSXR/dt vs HXR)', value: crossPct, label: `r = ${crossCorr.toFixed(3)}`, color: crossColor }
     ];
-  }, [goesData, activeRegions, demoActive, flares]);
+  }, [pipelineNowcast]);
 
   return (
     <Card title="ALGORITHM CONFIDENCE FACTORS" className="flex flex-col h-full justify-center">

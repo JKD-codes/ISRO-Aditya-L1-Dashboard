@@ -1,40 +1,38 @@
 import React, { useMemo } from 'react';
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ReferenceLine } from 'recharts';
 import { Card } from '../ui/Card';
-import useMLStore from '../../store/useMLStore';
+import { useStore } from '../../store/useStore';
 import { useGSAPEntrance } from '../../hooks/useGSAPEntrance';
 
-export function DualPayloadChart() {
-  const solexsLive = useMLStore(state => state.solexsLive);
-  const heliosLive = useMLStore(state => state.heliosLive);
-  const neupertResult = useMLStore(state => state.neupertResult);
+export function DualPayloadChart({ title }) {
+  const { solexsData, heliosData, pipelineNowcast } = useStore();
+  const neupertResult = pipelineNowcast?.detection;
   
   const containerRef = useGSAPEntrance({ y: 30, duration: 0.8 });
 
   const chartData = useMemo(() => {
+    if (!solexsData?.timestamps || !heliosData?.timestamps) return [];
+    
     const combined = [];
-    const minLen = Math.min(solexsLive.length, heliosLive.length);
-    for (let i = 0; i < minLen; i++) {
-      const s = solexsLive[i];
-      const h = heliosLive[i];
-      
-      const t = new Date(s.time_tag).getTime();
-      
+    const len = Math.min(solexsData.timestamps.length, solexsData.flux.length, heliosData.flux.length);
+    for (let i = 0; i < len; i++) {
+      const timeStr = solexsData.timestamps[i];
+      const t = new Date(timeStr).getTime();
       combined.push({
         time: t,
-        formattedTime: new Date(t).toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' }),
-        softXray: s.flux,
-        hardXray: h.counts_per_sec
+        formattedTime: new Date(timeStr).toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+        softXray: solexsData.flux[i],
+        hardXray: heliosData.flux[i]
       });
     }
     return combined;
-  }, [solexsLive, heliosLive]);
+  }, [solexsData, heliosData]);
 
   // Determine the reference line X-coordinate for Neupert Effect
   let neupertPoint = null;
-  if (neupertResult?.confirmed && chartData.length > 0) {
+  if (neupertResult?.neupert_confirmed && chartData.length > 0) {
     const latestTime = chartData[chartData.length - 1].time;
-    const targetTime = latestTime - (neupertResult.lead_mins * 60000);
+    const targetTime = latestTime - (neupertResult.neupert_delay_minutes * 60000);
     
     // Find closest data point to the lead time
     let closest = chartData[0];
@@ -71,18 +69,28 @@ export function DualPayloadChart() {
     return null;
   };
 
+  const isReal = solexsData?.is_real_data ?? false;
+
   return (
     <div ref={containerRef} className="flex-1 flex flex-col h-full">
       <Card className="flex-1 flex flex-col h-full" p={0}>
         <div className="px-4 py-2.5 border-b-[0.5px] border-border-subtle bg-[#020B18] flex items-center justify-between shrink-0">
           <div className="font-mono text-[10px] text-text-primary uppercase tracking-widest flex items-center gap-2">
-            <span>ADITYA-L1 DUAL PAYLOAD · REALTIME STREAM</span>
+            <span>{title || "ADITYA-L1 DUAL PAYLOAD · REALTIME STREAM"}</span>
           </div>
           <div className="font-mono text-[9px] text-text-secondary flex gap-3 items-center">
-            {neupertResult?.confirmed && (
+            {neupertResult?.neupert_confirmed && (
               <span className="text-[#FFB347]">NEUPERT EFFECT DETECTED</span>
             )}
-            <span>LIVE</span>
+            {isReal ? (
+              <span className="px-2 py-0.5 rounded border border-[#00E5A0] bg-[#00E5A0]/10 text-[#00E5A0] font-bold">
+                REAL ADITYA-L1 DATA
+              </span>
+            ) : (
+              <span className="px-2 py-0.5 rounded border border-[#FFB347] bg-[#FFB347]/10 text-[#FFB347] font-bold">
+                DEMONSTRATION DATA
+              </span>
+            )}
           </div>
         </div>
 
@@ -124,7 +132,7 @@ export function DualPayloadChart() {
                     stroke="#FFB347" 
                     strokeDasharray="3 3" 
                     yAxisId="left" 
-                    label={{ value: `NEUPERT T-${neupertResult.lead_mins}m`, fill: '#FFB347', position: 'top', fontSize: 9 }} 
+                    label={{ value: `NEUPERT T-${neupertResult.neupert_delay_minutes}m`, fill: '#FFB347', position: 'top', fontSize: 9 }} 
                   />
                 )}
 
