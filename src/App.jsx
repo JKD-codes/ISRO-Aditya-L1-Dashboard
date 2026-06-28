@@ -24,17 +24,6 @@ function App() {
   // Hook handles websocket connection lifecycle automatically
   useWebSocket();
 
-  // Watch for theme changes
-  const themeContrast = useStore(state => state.themeContrast);
-  useEffect(() => {
-    document.body.className = '';
-    if (themeContrast === 'midnight') {
-      document.body.classList.add('theme-midnight');
-    } else if (themeContrast === 'high-contrast') {
-      document.body.classList.add('theme-high-contrast');
-    }
-  }, [themeContrast]);
-
   useEffect(() => {
     // Initialize main store
     const cleanup = initStore();

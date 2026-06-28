@@ -39,42 +39,9 @@ export const useStore = create((set, get) => ({
     set({ presentationMode: next });
   },
 
-  // Settings Modal & App Config
+  // Settings Modal
   isSettingsOpen: false,
   setSettingsOpen: (isOpen) => set({ isSettingsOpen: isOpen }),
-  
-  refreshRate: 60000,
-  setRefreshRate: (rateMs) => {
-    set({ refreshRate: rateMs });
-    get().restartPolling();
-  },
-
-  themeContrast: 'deep-space', // 'deep-space', 'midnight', 'high-contrast'
-  setThemeContrast: (theme) => set({ themeContrast: theme }),
-
-  groqApiKey: localStorage.getItem('groqApiKey') || '',
-  setGroqApiKey: (key) => {
-    localStorage.setItem('groqApiKey', key);
-    set({ groqApiKey: key });
-  },
-
-  goesIntervalId: null,
-
-  restartPolling: () => {
-    const currentTimer = get().goesIntervalId;
-    if (currentTimer) clearInterval(currentTimer);
-
-    const rate = get().refreshRate;
-    if (rate === 'realtime') return; // Handled by WebSocket
-
-    const newTimer = setInterval(() => {
-      if (!get().demoActive) {
-        get().fetchData();
-      }
-    }, rate);
-    
-    set({ goesIntervalId: newTimer });
-  },
 
   // Alerts state
   activeAlert: null,
@@ -107,8 +74,12 @@ export const useStore = create((set, get) => ({
     await get().fetchData();
     await get().fetchProbsAndRegions();
 
-    // Setup configurable interval for GOES
-    get().restartPolling();
+    // Setup 60s interval for GOES
+    const goesIntervalId = setInterval(() => {
+      if (!get().demoActive) {
+        get().fetchData();
+      }
+    }, 60000);
 
     // Setup 10-minute interval for solar probabilities and active regions
     const probsIntervalId = setInterval(() => {
@@ -126,8 +97,7 @@ export const useStore = create((set, get) => ({
     window.addEventListener('keydown', handleKeyDown);
 
     return () => {
-      const currentTimer = get().goesIntervalId;
-      if (currentTimer) clearInterval(currentTimer);
+      clearInterval(goesIntervalId);
       clearInterval(probsIntervalId);
       window.removeEventListener('keydown', handleKeyDown);
     };
