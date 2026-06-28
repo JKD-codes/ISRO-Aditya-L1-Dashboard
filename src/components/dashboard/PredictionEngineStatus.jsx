@@ -140,8 +140,8 @@ export function PredictionEngineStatus({ className }) {
   }, []);
 
   return (
-    <Card title="Aditya-L1 Forecasting Algorithm Pipeline" className={cn("flex flex-col relative", className)}>
-      <div className="flex-1 w-full bg-[#020B18] border border-border-subtle p-3 font-mono text-[10px] overflow-hidden flex flex-col gap-1">
+    <Card title="Aditya-L1 Forecasting Algorithm Pipeline" className={cn("flex flex-col h-full relative", className)}>
+      <div className="flex-1 w-full h-full bg-[#020B18] border border-border-subtle p-3 font-mono text-[10px] overflow-hidden flex flex-col gap-1 min-h-0">
         <div className="flex items-center gap-2 mb-2 pb-2 border-b border-border-subtle text-accent-green">
           <Activity className="w-4 h-4 animate-pulse" />
           <span>STATUS: ONLINE | SOURCE: GOES-18 + SoLEXS+HEL1OS FUSION | LATENCY: {liveMs}ms</span>

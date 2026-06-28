@@ -78,7 +78,7 @@ export function Dashboard() {
   }, [triggerDemoMode]);
 
   return (
-    <div ref={dashboardRef} className="h-[calc(100vh-64px)] flex flex-col overflow-hidden bg-transparent relative">
+    <div ref={dashboardRef} className="h-auto xl:h-[calc(100vh-64px)] flex flex-col overflow-y-auto xl:overflow-hidden bg-transparent relative">
       <AlertBanner />
       
       {presentationMode && (
@@ -88,11 +88,11 @@ export function Dashboard() {
       )}
 
       {/* Enterprise Grid Layout */}
-      <div className="flex-1 flex gap-2 w-full h-full p-3 overflow-hidden z-10">
+      <div className="flex-1 flex flex-col xl:flex-row gap-2 w-full h-full p-3 overflow-hidden z-10">
         
         {/* Left Column (260px) */}
         {!presentationMode && (
-          <div className="w-[260px] flex-shrink-0 flex flex-col gap-2 overflow-y-auto custom-scrollbar pr-1 relative z-10">
+          <div className="w-full xl:w-[260px] flex-shrink-0 flex flex-col gap-2 h-auto xl:h-full xl:overflow-y-auto custom-scrollbar xl:pr-1 relative z-10">
             <div className="shrink-0 dashboard-card" style={{ height: '200px' }}>
               <PayloadStatus />
             </div>
@@ -112,10 +112,10 @@ export function Dashboard() {
         )}
 
         {/* Vertical Separator */}
-        {!presentationMode && <div className="w-px h-full bg-[rgba(255,107,0,0.12)] shrink-0" />}
+        {!presentationMode && <div className="hidden xl:block w-px h-full bg-[rgba(255,107,0,0.12)] shrink-0" />}
 
         {/* Center Column (flex: 1) */}
-        <div className="flex-1 flex flex-col gap-2 overflow-y-auto custom-scrollbar px-1 relative z-10">
+        <div className="w-full xl:flex-1 flex flex-col gap-2 h-auto xl:h-full xl:overflow-y-auto custom-scrollbar xl:px-1 relative z-10">
           <div className="shrink-0 dashboard-card" style={{ height: '260px' }}>
             <LiveFluxChart />
           </div>
@@ -128,11 +128,11 @@ export function Dashboard() {
         </div>
 
         {/* Vertical Separator */}
-        {!presentationMode && <div className="w-px h-full bg-[rgba(255,107,0,0.12)] shrink-0" />}
+        {!presentationMode && <div className="hidden xl:block w-px h-full bg-[rgba(255,107,0,0.12)] shrink-0" />}
 
         {/* Right Column (280px) */}
         {!presentationMode && (
-          <div className="w-[280px] flex-shrink-0 flex flex-col gap-2 overflow-y-auto custom-scrollbar pl-1 relative z-10">
+          <div className="w-full xl:w-[280px] flex-shrink-0 flex flex-col gap-2 h-auto xl:h-full xl:overflow-y-auto custom-scrollbar xl:pl-1 relative z-10">
             <div className="shrink-0 dashboard-card" style={{ height: '300px' }}>
               <FlareProbabilityGauge />
             </div>

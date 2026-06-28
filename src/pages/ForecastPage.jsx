@@ -41,7 +41,7 @@ export default function ForecastPage() {
       </div>
 
       {/* Hero row: three MLForecastPanels */}
-      <div className="flex gap-4 h-[280px] shrink-0">
+      <div className="flex flex-col lg:flex-row gap-4 lg:h-[280px] shrink-0">
         <div className="flex-1 stagger-card">
           <MLForecastPanel defaultHorizon={15} />
         </div>
@@ -54,12 +54,12 @@ export default function ForecastPage() {
       </div>
 
       {/* Full-width LiveFluxChart with dashed forecast extension */}
-      <div className="flex-1 min-h-[350px] stagger-card">
+      <div className="flex-1 min-h-[350px] flex flex-col stagger-card">
         <LiveFluxChart showForecast={true} />
       </div>
 
       {/* NeupertEffectPanel full width */}
-      <div className="h-[250px] shrink-0 stagger-card">
+      <div className="h-auto lg:h-[250px] shrink-0 stagger-card">
         <NeupertEffectPanel />
       </div>
     </div>

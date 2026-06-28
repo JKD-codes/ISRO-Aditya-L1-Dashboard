@@ -59,7 +59,7 @@ export function SpaceWeatherImpactPanel() {
   }, [goesData, demoActive]);
 
   return (
-    <Card title="SPACE WEATHER IMPACT PANEL">
+    <Card title="SPACE WEATHER IMPACT PANEL" className="flex flex-col h-full justify-center">
       <div className="flex flex-col gap-4 py-2">
         {metrics.map((row, idx) => (
           <div key={idx} className="flex flex-col gap-1.5" title={row.description}>

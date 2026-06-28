@@ -69,7 +69,7 @@ export default function AlertHistoryPage() {
     <div className="p-4 space-y-4" ref={containerRef}>
       <div className="history-card">
         <Card className="flex flex-col mb-4 p-4" p={0}>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <FilterButton label="ALL ALERTS" value="ALL" />
             <FilterButton label="B-CLASS" value="B" />
             <FilterButton label="C-CLASS" value="C" />

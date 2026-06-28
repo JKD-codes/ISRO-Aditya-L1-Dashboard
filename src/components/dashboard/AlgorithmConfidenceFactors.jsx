@@ -102,7 +102,7 @@ export function AlgorithmConfidenceFactors() {
   }, [goesData, activeRegions, demoActive, flares]);
 
   return (
-    <Card title="ALGORITHM CONFIDENCE FACTORS">
+    <Card title="ALGORITHM CONFIDENCE FACTORS" className="flex flex-col h-full justify-center">
       {/* Title separator */}
       <div className="h-[1px] bg-[rgba(255,107,0,0.15)] w-full mb-4 -mt-2" />
       
