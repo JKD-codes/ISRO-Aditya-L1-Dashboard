@@ -119,3 +119,18 @@
 .presentation-mode .font-mono { 
   font-size: 120%; 
 }
+
+/* Theme Contrasts */
+body.theme-midnight {
+  background: radial-gradient(circle at 50% 0%, #030B14 0%, #010408 60%, #000000 100%);
+}
+
+body.theme-high-contrast {
+  background: #000000;
+}
+body.theme-high-contrast .text-text-secondary {
+  color: #D1D5DB; /* Lighter secondary text for higher contrast */
+}
+body.theme-high-contrast .border-border-subtle {
+  border-color: rgba(255, 255, 255, 0.2);
+}

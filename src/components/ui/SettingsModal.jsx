@@ -4,7 +4,18 @@ import { X, SlidersHorizontal, Monitor, Activity, Eye, Key } from 'lucide-react'
 import { cn } from '../../lib/utils';
 
 export function SettingsModal() {
-  const { isSettingsOpen, setSettingsOpen, presentationMode, togglePresentationMode } = useStore();
+  const { 
+    isSettingsOpen, 
+    setSettingsOpen, 
+    presentationMode, 
+    togglePresentationMode,
+    refreshRate,
+    setRefreshRate,
+    themeContrast,
+    setThemeContrast,
+    groqApiKey,
+    setGroqApiKey
+  } = useStore();
 
   if (!isSettingsOpen) return null;
 
@@ -47,11 +58,15 @@ export function SettingsModal() {
                   <div className="text-text-secondary text-[11px]">Polling interval for GOES/SoLEXS data</div>
                 </div>
               </div>
-              <select className="bg-[#0A1628] border border-border-subtle text-text-primary text-[12px] px-2 py-1 outline-none rounded-sm cursor-pointer">
-                <option>Real-time (WebSocket)</option>
-                <option>10 Seconds</option>
-                <option>30 Seconds</option>
-                <option>60 Seconds (Default)</option>
+              <select 
+                value={refreshRate}
+                onChange={(e) => setRefreshRate(e.target.value === 'realtime' ? 'realtime' : Number(e.target.value))}
+                className="bg-[#0A1628] border border-border-subtle text-text-primary text-[12px] px-2 py-1 outline-none rounded-sm cursor-pointer"
+              >
+                <option value="realtime">Real-time (WebSocket)</option>
+                <option value={10000}>10 Seconds</option>
+                <option value={30000}>30 Seconds</option>
+                <option value={60000}>60 Seconds (Default)</option>
               </select>
             </div>
           </div>
@@ -92,10 +107,14 @@ export function SettingsModal() {
                   <div className="text-text-secondary text-[11px]">Adjust dark mode baseline</div>
                 </div>
               </div>
-              <select className="bg-[#0A1628] border border-border-subtle text-text-primary text-[12px] px-2 py-1 outline-none rounded-sm cursor-pointer">
-                <option>Deep Space (Default)</option>
-                <option>Midnight Blue</option>
-                <option>High Contrast</option>
+              <select 
+                value={themeContrast}
+                onChange={(e) => setThemeContrast(e.target.value)}
+                className="bg-[#0A1628] border border-border-subtle text-text-primary text-[12px] px-2 py-1 outline-none rounded-sm cursor-pointer"
+              >
+                <option value="deep-space">Deep Space (Default)</option>
+                <option value="midnight">Midnight Blue</option>
+                <option value="high-contrast">High Contrast</option>
               </select>
             </div>
           </div>
@@ -111,9 +130,13 @@ export function SettingsModal() {
                   <div className="text-text-secondary text-[11px]">Required for AI flare insights</div>
                 </div>
               </div>
-              <button className="px-3 py-1 bg-white/5 hover:bg-white/10 border border-border-subtle text-text-primary text-[11px] rounded-sm transition-colors">
-                Manage
-              </button>
+              <input 
+                type="password"
+                placeholder="sk-..."
+                value={groqApiKey}
+                onChange={(e) => setGroqApiKey(e.target.value)}
+                className="px-3 py-1 w-32 bg-[#0A1628] border border-border-subtle text-text-primary text-[11px] rounded-sm outline-none focus:border-accent-orange transition-colors"
+              />
             </div>
           </div>
 
