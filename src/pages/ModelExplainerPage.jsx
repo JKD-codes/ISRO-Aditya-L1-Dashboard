@@ -75,7 +75,7 @@ export default function ModelExplainerPage() {
           </div>
 
           {/* Feature Importances */}
-          <Card title="XGBOOST FEATURE IMPORTANCES" className="stagger-section h-[320px]">
+          <Card title="XGBOOST FEATURE IMPORTANCES" className="stagger-section flex-1 min-h-[320px]">
             <FeatureImportanceChart data={featureImportances} />
           </Card>
         </div>

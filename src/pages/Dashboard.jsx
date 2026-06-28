@@ -136,10 +136,10 @@ export function Dashboard() {
             <div className="shrink-0 dashboard-card" style={{ height: '300px' }}>
               <FlareProbabilityGauge />
             </div>
-            <div className="shrink-0 dashboard-card" style={{ height: '120px' }}>
+            <div className="shrink-0 dashboard-card" style={{ minHeight: '140px' }}>
               <SpaceWeatherImpactPanel />
             </div>
-            <div className="shrink-0 dashboard-card" style={{ height: '150px' }}>
+            <div className="shrink-0 dashboard-card" style={{ minHeight: '180px' }}>
               <AlgorithmConfidenceFactors />
             </div>
             <div className="flex-1 min-h-[150px] flex flex-col dashboard-card">

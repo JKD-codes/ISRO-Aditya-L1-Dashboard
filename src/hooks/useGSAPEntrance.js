@@ -6,13 +6,16 @@ export function useGSAPEntrance(options = {}) {
 
   useEffect(() => {
     if (ref.current) {
-      gsap.from(ref.current, {
-        opacity: 0,
-        y: 20,
-        duration: 0.8,
-        ease: 'power3.out',
-        ...options
-      });
+      const ctx = gsap.context(() => {
+        gsap.from(ref.current, {
+          opacity: 0,
+          y: 20,
+          duration: 0.8,
+          ease: 'power3.out',
+          ...options
+        });
+      }, ref);
+      return () => ctx.revert();
     }
   }, []); // Only run once on mount
 
