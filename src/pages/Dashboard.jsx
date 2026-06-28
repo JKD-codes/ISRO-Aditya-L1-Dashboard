@@ -87,67 +87,78 @@ export function Dashboard() {
         </div>
       )}
 
-      {/* Enterprise Grid Layout */}
-      <div className="flex-1 flex flex-col xl:flex-row gap-2 w-full h-full p-3 overflow-hidden z-10">
-        
-        {/* Left Column (260px) */}
-        {!presentationMode && (
-          <div className="w-full xl:w-[260px] flex-shrink-0 flex flex-col gap-2 h-auto xl:h-full xl:overflow-y-auto custom-scrollbar xl:pr-1 relative z-10">
-            <div className="shrink-0 dashboard-card" style={{ height: '200px' }}>
-              <PayloadStatus />
-            </div>
-            <div className="shrink-0 dashboard-card" style={{ height: '130px' }}>
-              <SolarWindMonitor />
-            </div>
-            <div className="shrink-0 dashboard-card" style={{ height: '240px' }}>
-              <ActiveRegionTable />
-            </div>
-            <div className="shrink-0 dashboard-card">
-              <SpectralHardnessChart />
-            </div>
-            <div className="flex-1 min-h-[200px] flex flex-col dashboard-card">
-              <SolarSimulation />
-            </div>
-          </div>
-        )}
+      {/* Dynamic Asymmetric Grid Layout */}
+      <div className="flex-1 w-full p-2 xl:p-4 overflow-y-auto custom-scrollbar relative z-10">
+        <div className="grid grid-cols-1 md:grid-cols-6 xl:grid-cols-12 gap-2 xl:gap-3 auto-rows-min pb-[100px]">
+          
+          {!presentationMode ? (
+            <>
+              {/* Row 1-4: Solar Simulation (Huge Left Focus) */}
+              <div className="md:col-span-6 xl:col-span-7 xl:row-span-4 dashboard-card flex flex-col min-h-[380px] xl:min-h-[500px]">
+                <SolarSimulation />
+              </div>
 
-        {/* Vertical Separator */}
-        {!presentationMode && <div className="hidden xl:block w-px h-full bg-[rgba(255,107,0,0.12)] shrink-0" />}
+              {/* Row 1: Top Right Metrics */}
+              <div className="md:col-span-2 xl:col-span-2 xl:row-span-1 dashboard-card min-h-[110px] xl:min-h-[130px]">
+                <FlareProbabilityGauge />
+              </div>
+              <div className="md:col-span-4 xl:col-span-3 xl:row-span-1 dashboard-card min-h-[110px] xl:min-h-[130px]">
+                <PayloadStatus />
+              </div>
 
-        {/* Center Column (flex: 1) */}
-        <div className="w-full xl:flex-1 flex flex-col gap-2 h-auto xl:h-full xl:overflow-y-auto custom-scrollbar xl:px-1 relative z-10">
-          <div className="shrink-0 dashboard-card" style={{ height: '260px' }}>
-            <LiveFluxChart />
-          </div>
-          <div className="shrink-0 dashboard-card" style={{ height: presentationMode ? '400px' : '300px' }}>
-            <DualPayloadChart />
-          </div>
-          <div className="shrink-0 dashboard-card" style={{ height: '180px' }}>
-            <PredictionEngineStatus />
-          </div>
+              {/* Row 2-3: Live Flux Chart (Right Middle) */}
+              <div className="md:col-span-6 xl:col-span-5 xl:row-span-2 dashboard-card min-h-[240px] xl:min-h-[280px]">
+                <LiveFluxChart />
+              </div>
+
+              {/* Row 4: Prediction Engine (Right Bottom) */}
+              <div className="md:col-span-6 xl:col-span-5 xl:row-span-1 dashboard-card min-h-[100px] xl:min-h-[110px]">
+                <PredictionEngineStatus />
+              </div>
+
+              {/* Row 5-6: Dual Payload (Left Bottom) & Active Regions (Right Bottom) */}
+              <div className="md:col-span-6 xl:col-span-7 xl:row-span-2 dashboard-card min-h-[280px] xl:min-h-[320px]">
+                <DualPayloadChart />
+              </div>
+              <div className="md:col-span-6 xl:col-span-5 xl:row-span-2 dashboard-card min-h-[280px] xl:min-h-[320px]">
+                <ActiveRegionTable />
+              </div>
+
+              {/* Row 7: Bottom Metric Row */}
+              <div className="md:col-span-2 xl:col-span-3 xl:row-span-1 dashboard-card min-h-[140px]">
+                <SolarWindMonitor />
+              </div>
+              <div className="md:col-span-2 xl:col-span-3 xl:row-span-1 dashboard-card min-h-[140px]">
+                <SpaceWeatherImpactPanel />
+              </div>
+              <div className="md:col-span-2 xl:col-span-3 xl:row-span-1 dashboard-card min-h-[140px]">
+                <AlgorithmConfidenceFactors />
+              </div>
+              <div className="md:col-span-6 xl:col-span-3 xl:row-span-1 dashboard-card min-h-[140px]">
+                <SpectralHardnessChart />
+              </div>
+
+              {/* Row 8: Full Width Insight */}
+              <div className="md:col-span-6 xl:col-span-12 xl:row-span-1 dashboard-card min-h-[140px]">
+                <GroqInsightPanel />
+              </div>
+            </>
+          ) : (
+            <>
+              {/* Presentation Mode Layout */}
+              <div className="md:col-span-6 xl:col-span-12 xl:row-span-2 dashboard-card min-h-[400px]">
+                <LiveFluxChart />
+              </div>
+              <div className="md:col-span-6 xl:col-span-12 xl:row-span-2 dashboard-card min-h-[400px]">
+                <DualPayloadChart />
+              </div>
+              <div className="md:col-span-6 xl:col-span-12 xl:row-span-1 dashboard-card min-h-[150px]">
+                <PredictionEngineStatus />
+              </div>
+            </>
+          )}
+
         </div>
-
-        {/* Vertical Separator */}
-        {!presentationMode && <div className="hidden xl:block w-px h-full bg-[rgba(255,107,0,0.12)] shrink-0" />}
-
-        {/* Right Column (280px) */}
-        {!presentationMode && (
-          <div className="w-full xl:w-[280px] flex-shrink-0 flex flex-col gap-2 h-auto xl:h-full xl:overflow-y-auto custom-scrollbar xl:pl-1 relative z-10">
-            <div className="shrink-0 dashboard-card" style={{ height: '300px' }}>
-              <FlareProbabilityGauge />
-            </div>
-            <div className="shrink-0 dashboard-card" style={{ minHeight: '140px' }}>
-              <SpaceWeatherImpactPanel />
-            </div>
-            <div className="shrink-0 dashboard-card" style={{ minHeight: '180px' }}>
-              <AlgorithmConfidenceFactors />
-            </div>
-            <div className="flex-1 min-h-[150px] flex flex-col dashboard-card">
-              <GroqInsightPanel />
-            </div>
-          </div>
-        )}
-
       </div>
     </div>
   );
