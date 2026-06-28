@@ -6,7 +6,7 @@ import { checkApiHealth } from '../../services/api';
 import { cn } from '../../lib/utils';
 
 export function TopNav() {
-  const { demoActive, triggerDemoMode, setSettingsOpen } = useStore();
+  const { demoActive, triggerDemoMode } = useStore();
   const { wsConnected } = useMLStore();
   const [apiStatus, setApiStatus] = useState('unknown'); // 'nominal', 'error', 'unknown'
   const [timeStr, setTimeStr] = useState('');
@@ -112,12 +112,6 @@ export function TopNav() {
           {timeStr} UTC
         </div>
 
-        <button 
-          onClick={() => setSettingsOpen(true)}
-          className="p-2 text-text-secondary hover:text-text-primary hover:bg-white/5 rounded-sm transition-colors ml-1"
-        >
-          <Settings className="w-4 h-4" />
-        </button>
       </div>
 
     </nav>
