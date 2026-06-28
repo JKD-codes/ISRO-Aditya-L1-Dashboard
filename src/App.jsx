@@ -12,6 +12,7 @@ import AlertHistoryPage from './pages/AlertHistoryPage';
 import { useStore } from './store/useStore';
 import useMLStore from './store/useMLStore';
 import { ToastManager } from './components/ui/ToastManager';
+import { SettingsModal } from './components/ui/SettingsModal';
 import { useWebSocket } from './hooks/useWebSocket';
 
 const queryClient = new QueryClient();
@@ -50,6 +51,7 @@ function App() {
           </Route>
         </Routes>
         <ToastManager />
+        <SettingsModal />
       </Router>
     </QueryClientProvider>
   );

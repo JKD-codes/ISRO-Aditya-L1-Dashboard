@@ -39,6 +39,10 @@ export const useStore = create((set, get) => ({
     set({ presentationMode: next });
   },
 
+  // Settings Modal
+  isSettingsOpen: false,
+  setSettingsOpen: (isOpen) => set({ isSettingsOpen: isOpen }),
+
   // Alerts state
   activeAlert: null,
   setActiveAlert: (alert) => set({ activeAlert: alert }),
