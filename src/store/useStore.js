@@ -36,6 +36,9 @@ export const useStore = create((set, get) => ({
   togglePresentationMode: () => {
     const next = !get().presentationMode;
     localStorage.setItem('presentationMode', String(next));
+    set({ presentationMode: next });
+  },
+
   // Settings Modal & App Config
   isSettingsOpen: false,
   setSettingsOpen: (isOpen) => set({ isSettingsOpen: isOpen }),
