@@ -48,12 +48,9 @@ export function TopNav() {
 
       {/* Center zone */}
       <div className="flex-1 flex flex-col items-center justify-center">
-        <span className="font-mono text-[11px] text-text-secondary uppercase tracking-widest mb-1">
+        <span className="font-mono text-[11px] text-text-secondary uppercase tracking-widest">
           MISSION DAY 144
         </span>
-        <div className="font-mono text-[18px] text-text-primary font-bold tracking-wider leading-none">
-          {timeStr} UTC
-        </div>
         {demoActive && (
           <div className="mt-1 flex items-center gap-1.5">
             <span className="w-1.5 h-1.5 bg-[#FFB347] rounded-full animate-pulse" />
