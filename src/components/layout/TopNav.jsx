@@ -29,11 +29,11 @@ export function TopNav() {
   }, []);
 
   return (
-    <nav className="h-16 bg-[#020B18] border-b-[0.5px] border-border-subtle flex items-center justify-between px-4 sticky top-0 z-50 shrink-0">
+    <nav className="h-16 bg-[#020B18] border-b-[0.5px] border-border-subtle flex items-center justify-between px-4 sticky top-0 z-50 shrink-0 relative">
       
       {/* Left zone */}
-      <div className="flex-1 flex items-center gap-3 min-w-0">
-        <div className="w-10 h-10 bg-accent-orange/10 rounded-sm border border-accent-orange/30 flex items-center justify-center shrink-0">
+      <div className="flex items-center gap-2 md:gap-3 min-w-0 max-w-[40%]">
+        <div className="w-10 h-10 bg-accent-orange/10 rounded-sm border border-accent-orange/30 hidden sm:flex items-center justify-center shrink-0">
           <Rocket className="w-5 h-5 text-accent-orange" />
         </div>
         <div className="flex flex-col justify-center min-w-0">
@@ -46,8 +46,8 @@ export function TopNav() {
         </div>
       </div>
 
-      {/* Center zone */}
-      <div className="flex flex-col items-center justify-center px-2 md:px-4 shrink-0">
+      {/* Center zone - ABSOLUTE POSITIONED TO PREVENT OVERFLOW GLITCHES */}
+      <div className="absolute left-1/2 -translate-x-1/2 flex flex-col items-center justify-center px-2 shrink-0">
         <span className="font-mono text-[10px] md:text-[11px] text-text-secondary uppercase tracking-widest whitespace-nowrap">
           MISSION DAY 144
         </span>
@@ -62,7 +62,7 @@ export function TopNav() {
       </div>
 
       {/* Right zone */}
-      <div className="flex-1 flex items-center justify-end gap-2 md:gap-3 min-w-0">
+      <div className="flex items-center justify-end gap-2 md:gap-3 min-w-0 max-w-[50%]">
         {demoActive && (
           <div className="flex items-center gap-2 bg-[#FF3B3B]/10 border border-[#FF3B3B]/30 px-3 py-1 rounded-sm mr-2">
             <ShieldAlert className="w-3.5 h-3.5 text-[#FF3B3B]" />
@@ -100,7 +100,7 @@ export function TopNav() {
           </span>
         </div>
 
-        <div className="hidden lg:flex items-center gap-1.5 bg-[#8FA3C0]/10 border border-[#8FA3C0]/30 px-3 py-1 rounded-sm shrink-0">
+        <div className="hidden xl:flex items-center gap-1.5 bg-[#8FA3C0]/10 border border-[#8FA3C0]/30 px-3 py-1 rounded-sm shrink-0">
           <span className="w-2 h-2 bg-[#8FA3C0] rounded-full" />
           <span className="font-mono text-[10px] text-[#8FA3C0] font-bold tracking-widest uppercase whitespace-nowrap">
             L1 POINT · NOMINAL
