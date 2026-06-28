@@ -3,3 +3,6 @@ uvicorn
 httpx
 astropy
 cachetools
+xgboost
+joblib
+pandas

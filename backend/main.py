@@ -5,6 +5,12 @@ from cachetools import TTLCache
 import asyncio
 from datetime import datetime, timedelta
 import random
+from aditya_parser import parse_solexs_fits, parse_helios_fits
+from flare_detector import detect_flares
+from ml_model import predict, get_model
+
+# Ensure model is trained on startup
+get_model()
 
 app = FastAPI()
 
@@ -120,19 +126,7 @@ async def get_solar_cycle():
 
 @app.get("/api/aditya/solexs")
 async def get_aditya_solexs():
-    base_time = datetime.fromisoformat("2024-05-10T10:00:00Z")
-    data = []
-    for i in range(120): # 2 hours of data, 1 min intervals
-        time = base_time + timedelta(minutes=i)
-        base_flux = 1e-8
-        if i > 50 and i < 90:
-            flux = 1e-4 * (1 - abs(i - 70) / 20) ** 2 + base_flux # Gradual rise and fall (Soft X-ray)
-        else:
-            flux = base_flux + random.uniform(-1e-9, 1e-9)
-        data.append({
-            "time_tag": time.isoformat(),
-            "flux": max(1e-9, flux)
-        })
+    data = parse_solexs_fits()
     return {
         "metadata": {
             "instrument": "SoLEXS",
@@ -146,19 +140,7 @@ async def get_aditya_solexs():
 
 @app.get("/api/aditya/helios")
 async def get_aditya_helios():
-    base_time = datetime.fromisoformat("2024-05-10T10:00:00Z")
-    data = []
-    for i in range(120): 
-        time = base_time + timedelta(minutes=i)
-        base_counts = 50
-        if i > 50 and i < 75:
-            counts = 5000 * (1 - abs(i - 60) / 15) ** 4 + base_counts
-        else:
-            counts = base_counts + random.randint(-10, 10)
-        data.append({
-            "time_tag": time.isoformat(),
-            "counts_per_sec": max(0, counts)
-        })
+    data = parse_helios_fits()
     return {
         "metadata": {
             "instrument": "HEL1OS",
@@ -170,3 +152,26 @@ async def get_aditya_helios():
         "data": data
     }
 
+@app.get("/api/nowcast")
+async def get_nowcast():
+    solexs_data = parse_solexs_fits()
+    helios_data = parse_helios_fits()
+    flares = detect_flares(solexs_data, helios_data)
+    
+    return {
+        "status": "active",
+        "flares": flares,
+        "timestamp": datetime.utcnow().isoformat() + "Z"
+    }
+
+@app.get("/api/forecast")
+async def get_forecast():
+    solexs_data = parse_solexs_fits()
+    helios_data = parse_helios_fits()
+    
+    prediction = predict(solexs_data, helios_data)
+    
+    if prediction:
+        return prediction
+    
+    return JSONResponse(status_code=500, content={"error": "Insufficient data for prediction"})
