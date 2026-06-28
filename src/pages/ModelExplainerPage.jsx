@@ -105,8 +105,8 @@ export default function ModelExplainerPage() {
                   <YAxis yAxisId="left" hide />
                   <YAxis yAxisId="right" orientation="right" hide />
                   
-                  <ReferenceLine x={10} yAxisId="left" stroke="#FFB347" strokeDasharray="3 3" label={{ value: 'Hard X-Ray Peak', fill: '#FFB347', position: 'insideTopLeft', fontSize: 10 }} />
-                  <ReferenceLine x={15} yAxisId="right" stroke="#4FC3F7" strokeDasharray="3 3" label={{ value: 'Soft X-Ray Peak', fill: '#4FC3F7', position: 'insideTopRight', fontSize: 10 }} />
+                  <ReferenceLine x={10} yAxisId="left" stroke="#FFB347" strokeDasharray="3 3" label={{ value: 'Hard X-Ray Peak', fill: '#FFB347', position: 'top', dy: -12, fontSize: 10 }} />
+                  <ReferenceLine x={15} yAxisId="right" stroke="#4FC3F7" strokeDasharray="3 3" label={{ value: 'Soft X-Ray Peak', fill: '#4FC3F7', position: 'top', dy: 12, fontSize: 10 }} />
 
                   <Line yAxisId="left" type="monotone" dataKey="hardXray" stroke="#FFB347" strokeWidth={2} dot={false} isAnimationActive={false} />
                   <Line yAxisId="right" type="monotone" dataKey="softXray" stroke="#4FC3F7" strokeWidth={2} dot={false} isAnimationActive={false} />
