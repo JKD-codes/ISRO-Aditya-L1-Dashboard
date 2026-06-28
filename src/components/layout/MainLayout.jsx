@@ -3,6 +3,7 @@ import { Outlet, useLocation } from 'react-router-dom';
 import { Menu } from 'lucide-react';
 import { Sidebar } from './Sidebar';
 import { TopNav } from './TopNav';
+import { JudgeDemoPanel } from '../dashboard/JudgeDemoPanel';
 import { useStore } from '../../store/useStore';
 import { cn } from '../../lib/utils';
 
@@ -89,6 +90,7 @@ export function MainLayout() {
           </div>
         )}
       </div>
+      <JudgeDemoPanel />
     </div>
   );
 }

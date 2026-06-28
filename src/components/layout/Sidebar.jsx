@@ -1,11 +1,17 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, History, Activity, Info } from 'lucide-react';
+import { LayoutDashboard, History, Activity, Info, TrendingUp, BrainCircuit, Bell } from 'lucide-react';
 import { cn } from '../../lib/utils';
+import useMLStore from '../../store/useMLStore';
 
 export function Sidebar({ isOpen, setIsOpen }) {
+  const { mlForecast } = useMLStore();
+  const t30Class = mlForecast?.horizons?.[1]?.predicted_class;
   const navItems = [
     { name: 'Dashboard', path: '/', icon: LayoutDashboard },
+    { name: 'ML Forecast', path: '/forecast', icon: TrendingUp },
+    { name: 'Model Explorer', path: '/model', icon: BrainCircuit },
+    { name: 'Alert History', path: '/alerts', icon: Bell },
     { name: 'Historical Analysis', path: '/history', icon: History },
     { name: 'Payload Health', path: '/payloads', icon: Activity },
     { name: 'About Mission', path: '/about', icon: Info },
@@ -73,7 +79,18 @@ export function Sidebar({ isOpen, setIsOpen }) {
               onClick={() => setIsOpen(false)}
             >
               <item.icon className="w-4 h-4 opacity-70 group-hover:opacity-100 group-hover:text-accent-orange transition-colors" />
-              <span className="font-display text-sm tracking-wide">{item.name}</span>
+              <span className="font-display text-sm tracking-wide flex-1">{item.name}</span>
+              {item.name === 'ML Forecast' && t30Class && (
+                <span className={cn(
+                  "font-mono text-[9px] px-1.5 py-0.5 rounded-sm border font-bold",
+                  t30Class.startsWith('X') ? "text-[#FF3B3B] bg-[#FF3B3B]/10 border-[#FF3B3B]/30" :
+                  t30Class.startsWith('M') ? "text-[#FFB347] bg-[#FFB347]/10 border-[#FFB347]/30" :
+                  t30Class.startsWith('C') ? "text-[#FDE047] bg-[#FDE047]/10 border-[#FDE047]/30" :
+                  "text-[#8FA3C0] bg-[#8FA3C0]/10 border-[#8FA3C0]/30"
+                )}>
+                  T+30 {t30Class}
+                </span>
+              )}
             </NavLink>
           ))}
         </nav>

@@ -286,7 +286,7 @@ export const useStore = create((set, get) => ({
   },
 
   // Demo simulation trigger
-  triggerDemoMode: () => {
+  triggerDemoMode: (flareClass = 'M5.2') => {
     const currentTimer = get().demoTimer;
     if (currentTimer) clearInterval(currentTimer);
 
@@ -299,15 +299,15 @@ export const useStore = create((set, get) => ({
       solarProbs: { B: 99, C: 95, M: 65, X: 22 },
       activeAlert: {
         id: 'DEMO_ALERT_' + Date.now(),
-        class: 'M5.2',
+        class: flareClass,
         level: 'STORM',
-        message: `M5.2 FLARE ONSET · AR4478 · S06E52 · ${nowUTC} UTC · IMPACT: MODERATE`,
+        message: `${flareClass} FLARE ONSET · AR4478 · S06E52 · ${nowUTC} UTC · IMPACT: MODERATE`,
         timestamp: new Date().toISOString(),
         region: '4478',
-        severity: 'WARNING',
+        severity: flareClass.startsWith('X') ? 'ALERT' : 'WARNING',
         type: 'ONSET'
       },
-      latestInsight: `[1] At ${nowUTC} UTC, GOES-18 XRS-B detected an M5.2 class flare onset from AR4478 at S06E52, currently the most complex region on the Earth-facing disk. [2] Aditya-L1's HEL1OS registered an impulsive hard X-ray spike 3 minutes prior to the SoLEXS soft X-ray peak, confirming particle acceleration via the Neupert Effect. [3] Moderate HF radio blackout (R2) expected on the sunlit hemisphere over the next 60-90 minutes; satellite operators should monitor for energetic particle flux increases.`
+      latestInsight: `[1] At ${nowUTC} UTC, GOES-18 XRS-B detected an ${flareClass} class flare onset from AR4478 at S06E52, currently the most complex region on the Earth-facing disk. [2] Aditya-L1's HEL1OS registered an impulsive hard X-ray spike 3 minutes prior to the SoLEXS soft X-ray peak, confirming particle acceleration via the Neupert Effect. [3] Moderate HF radio blackout (R2) expected on the sunlit hemisphere over the next 60-90 minutes; satellite operators should monitor for energetic particle flux increases.`
     });
 
     const interval = setInterval(() => {

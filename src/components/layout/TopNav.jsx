@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { useStore } from '../../store/useStore';
-import { ShieldAlert, Rocket, Settings, CheckCircle2, XCircle } from 'lucide-react';
+import useMLStore from '../../store/useMLStore';
+import { ShieldAlert, Rocket, Settings, CheckCircle2, XCircle, Activity } from 'lucide-react';
 import { checkApiHealth } from '../../services/api';
 import { cn } from '../../lib/utils';
 
 export function TopNav() {
-  const { demoActive } = useStore();
+  const { demoActive, triggerDemoMode } = useStore();
+  const { wsConnected } = useMLStore();
   const [apiStatus, setApiStatus] = useState('unknown'); // 'nominal', 'error', 'unknown'
   const [timeStr, setTimeStr] = useState('');
   
@@ -68,35 +70,49 @@ export function TopNav() {
           <div className="flex items-center gap-2 bg-[#FF3B3B]/10 border border-[#FF3B3B]/30 px-3 py-1 rounded-sm mr-2">
             <ShieldAlert className="w-3.5 h-3.5 text-[#FF3B3B]" />
             <span className="font-mono text-[10px] text-[#FF3B3B] font-bold tracking-widest">
-              DELTA REGION DETECTED (AR4478)
+              SIMULATION ACTIVE
             </span>
           </div>
         )}
 
-        <div className={cn(
-          "flex items-center gap-1.5 px-3 py-1 rounded-sm border",
-          apiStatus === 'nominal' ? "bg-accent-green/10 border-accent-green/30" : 
-          apiStatus === 'error' ? "bg-[#FF3B3B]/10 border-[#FF3B3B]/30" : 
-          "bg-white/5 border-white/10"
-        )}>
-          {apiStatus === 'nominal' ? <CheckCircle2 className="w-3.5 h-3.5 text-accent-green" /> : 
-           apiStatus === 'error' ? <XCircle className="w-3.5 h-3.5 text-[#FF3B3B]" /> : 
-           <div className="w-3.5 h-3.5 rounded-full border-2 border-text-secondary border-t-transparent animate-spin" />}
-          <span className={cn(
-            "font-mono text-[10px] font-bold tracking-widest",
-            apiStatus === 'nominal' ? "text-accent-green" : 
-            apiStatus === 'error' ? "text-[#FF3B3B]" : 
-            "text-text-secondary"
-          )}>
-            API {apiStatus === 'nominal' ? '●' : apiStatus === 'error' ? 'ERR' : '...'}
+        {/* Simulate Flare Dropdown */}
+        <select 
+          onChange={(e) => {
+            if (e.target.value) {
+              triggerDemoMode(e.target.value);
+              e.target.value = '';
+            }
+          }}
+          className="bg-[#FF6B00]/10 border border-[#FF6B00]/30 text-[#FF6B00] font-mono text-[10px] tracking-widest px-2 py-1 rounded-sm outline-none cursor-pointer hover:bg-[#FF6B00]/20 transition-colors"
+        >
+          <option value="">SIMULATE FLARE</option>
+          <option value="M2.0">M2.0</option>
+          <option value="M5.2">M5.2</option>
+          <option value="X1.0">X1.0</option>
+          <option value="X3.5">X3.5</option>
+        </select>
+
+        <div className="flex items-center gap-1.5 px-3 py-1 rounded-sm border bg-[#020B18] border-border-subtle">
+          {wsConnected ? (
+            <span className="w-2 h-2 rounded-full bg-accent-green animate-pulse shadow-[0_0_8px_rgba(0,229,160,0.6)]" />
+          ) : (
+            <span className="w-2 h-2 rounded-full bg-text-secondary" />
+          )}
+          <span className="font-mono text-[10px] text-text-secondary font-bold tracking-widest">
+            WS
           </span>
         </div>
 
         <div className="flex items-center gap-1.5 bg-[#8FA3C0]/10 border border-[#8FA3C0]/30 px-3 py-1 rounded-sm">
           <span className="w-2 h-2 bg-[#8FA3C0] rounded-full" />
-          <span className="font-mono text-[10px] text-[#8FA3C0] font-bold tracking-widest">
-            NOMINAL
+          <span className="font-mono text-[10px] text-[#8FA3C0] font-bold tracking-widest uppercase">
+            L1 POINT · NOMINAL
           </span>
+        </div>
+
+        {/* Live Clock moved to right side */}
+        <div className="font-mono text-[14px] text-text-primary font-bold tracking-wider leading-none ml-2">
+          {timeStr} UTC
         </div>
 
         <button className="p-2 text-text-secondary hover:text-text-primary hover:bg-white/5 rounded-sm transition-colors ml-1">

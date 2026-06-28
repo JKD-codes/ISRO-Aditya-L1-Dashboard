@@ -114,3 +114,8 @@
     linear-gradient(90deg, rgba(255, 107, 0, 0.03) 1px, transparent 1px);
   background-size: 20px 20px;
 }
+
+/* Presentation Mode overrides */
+.presentation-mode .font-mono { 
+  font-size: 120%; 
+}

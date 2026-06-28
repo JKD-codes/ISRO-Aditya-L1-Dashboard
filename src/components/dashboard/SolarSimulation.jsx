@@ -1,11 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Card } from '../ui/Card';
 import { useStore } from '../../store/useStore';
+import { SolarParticles } from './SolarParticles';
 
 export function SolarSimulation() {
   const canvasRef = useRef(null);
   const containerRef = useRef(null);
-  const { demoActive, activeRegions } = useStore();
+  const { demoActive, activeRegions, activeAlert } = useStore();
   const [sdoImage, setSdoImage] = useState(null);
   const [imageFailed, setImageFailed] = useState(false);
 
@@ -341,7 +342,8 @@ export function SolarSimulation() {
       </div>
 
       <div ref={containerRef} className="flex-1 w-full bg-[#01050A] relative min-h-[200px]">
-        <canvas ref={canvasRef} className="absolute inset-0 block" />
+        <canvas ref={canvasRef} className="absolute inset-0 block z-0" />
+        <SolarParticles trigger={activeAlert !== null} />
       </div>
 
       <div className="px-4 py-1.5 bg-[#020B18] border-t-[0.5px] border-border-subtle shrink-0">

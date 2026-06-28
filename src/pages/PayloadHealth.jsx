@@ -62,7 +62,7 @@ export function PayloadHealth() {
   }, []);
 
   return (
-    <div className="h-full flex flex-col md:flex-row gap-6 overflow-y-auto pb-6 pr-2">
+    <div className="h-full flex flex-col md:flex-row gap-6 overflow-y-auto pb-6 pr-2 items-start">
       
       {/* Left Column - 40% */}
       <div className="w-full md:w-[40%] flex flex-col gap-6 shrink-0">
