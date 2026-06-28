@@ -35,9 +35,9 @@ export function MLForecastPanel({ defaultHorizon = 15 }) {
   const mlForecast = useMLStore(state => state.mlForecast);
 
   const horizons = mlForecast?.horizons || [
-    { horizon: 15, class_probs: { B: 0, C: 0, M: 0, X: 0 }, confidence: 82 },
-    { horizon: 30, class_probs: { B: 0, C: 0, M: 0, X: 0 }, confidence: 61 },
-    { horizon: 60, class_probs: { B: 0, C: 0, M: 0, X: 0 }, confidence: 41 },
+    { horizon: 15, class_probs: { B: 12, C: 68, M: 18, X: 2 }, confidence: 82 },
+    { horizon: 30, class_probs: { B: 25, C: 50, M: 22, X: 3 }, confidence: 61 },
+    { horizon: 60, class_probs: { B: 45, C: 35, M: 16, X: 4 }, confidence: 41 },
   ];
 
   const colors = {
