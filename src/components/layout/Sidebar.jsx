@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, History, Activity, Info, TrendingUp, BrainCircuit, Bell } from 'lucide-react';
+import { LayoutDashboard, History, Activity, Info, TrendingUp, BrainCircuit, Bell, Shield } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import useMLStore from '../../store/useMLStore';
 
@@ -10,6 +10,7 @@ export function Sidebar({ isOpen, setIsOpen }) {
   const navItems = [
     { name: 'Dashboard', path: '/', icon: LayoutDashboard },
     { name: 'ML Forecast', path: '/forecast', icon: TrendingUp },
+    { name: 'Nowcasting', path: '/nowcast', icon: Shield },
     { name: 'Model Explorer', path: '/model', icon: BrainCircuit },
     { name: 'Alert History', path: '/alerts', icon: Bell },
     { name: 'Historical Analysis', path: '/history', icon: History },

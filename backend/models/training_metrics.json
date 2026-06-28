@@ -1,0 +1,87 @@
+{
+  "accuracy": 0.84,
+  "TSS": 0.7034,
+  "HSS": 0.7804,
+  "TPR": 0.7451,
+  "FAR": 0.0417,
+  "confusion_matrix": [
+    [
+      37,
+      0,
+      1,
+      0,
+      0
+    ],
+    [
+      2,
+      14,
+      6,
+      0,
+      0
+    ],
+    [
+      0,
+      0,
+      23,
+      0,
+      0
+    ],
+    [
+      0,
+      0,
+      4,
+      8,
+      1
+    ],
+    [
+      0,
+      0,
+      0,
+      2,
+      2
+    ]
+  ],
+  "class_labels": [
+    "Q",
+    "B",
+    "C",
+    "M",
+    "X"
+  ],
+  "per_class": {
+    "Q": {
+      "TPR": 0.9737,
+      "FAR": 0.0323,
+      "precision": 0.9487,
+      "f1": 0.961
+    },
+    "B": {
+      "TPR": 0.6364,
+      "FAR": 0.0,
+      "precision": 1.0,
+      "f1": 0.7778
+    },
+    "C": {
+      "TPR": 1.0,
+      "FAR": 0.1429,
+      "precision": 0.6765,
+      "f1": 0.807
+    },
+    "M": {
+      "TPR": 0.6154,
+      "FAR": 0.023,
+      "precision": 0.8,
+      "f1": 0.6957
+    },
+    "X": {
+      "TPR": 0.5,
+      "FAR": 0.0104,
+      "precision": 0.6667,
+      "f1": 0.5714
+    }
+  },
+  "total_samples": 100,
+  "model_version": "XGBoost v1.0",
+  "evaluation_set": "held-out-synthetic",
+  "data_disclaimer": "Metrics computed on synthetic held-out test data (20% split). Model trained on physics-informed synthetic events with injected noise and class imbalance. Real-world performance on GOES/Aditya-L1 data will differ. Designed to swap in real PRADAN FITS data when available."
+}

@@ -34,7 +34,7 @@ export function Card({ className, children, withScanLine = false, title, headerR
           )}
         </div>
       )}
-      <div className="px-5 py-4 flex-1 flex flex-col min-h-0">
+      <div className={cn("flex-1 flex flex-col min-h-0", props.noPadding ? "" : "px-5 py-4")}>
         {children}
       </div>
     </div>

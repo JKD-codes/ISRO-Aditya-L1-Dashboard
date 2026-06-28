@@ -3,6 +3,7 @@ import { Card } from '../ui/Card';
 import { Activity } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { useStore } from '../../store/useStore';
+import useMLStore from '../../store/useMLStore';
 
 export function PredictionEngineStatus({ className }) {
   const [logs, setLogs] = useState([]);
@@ -45,11 +46,14 @@ export function PredictionEngineStatus({ className }) {
       }
 
       if (count % 8 === 0) {
-        const latency = (0.2 + Math.random() * 0.7).toFixed(1);
+        const wsState = useMLStore.getState();
+        const wsConnected = wsState.wsConnected;
+        const statusStr = wsConnected ? 'CONFIRMED' : 'DISCONNECTED';
+        const statusColor = wsConnected ? 'nominal' : 'warning';
         setLogs(prev => [...prev, {
           time: new Date(),
-          msg: `ADITYA-L1 SOLEXS SYNC: CONFIRMED | Δt ${latency}s latency`,
-          type: 'nominal'
+          msg: `ADITYA-L1 SOLEXS SYNC: ${statusStr} | WS: ${wsConnected ? 'CONNECTED' : 'RECONNECTING'}`,
+          type: statusColor
         }].slice(-20));
         return;
       }
@@ -144,7 +148,7 @@ export function PredictionEngineStatus({ className }) {
       <div className="flex-1 w-full h-full bg-[#020B18] border border-border-subtle p-3 font-mono text-[10px] overflow-hidden flex flex-col gap-1 min-h-0">
         <div className="flex items-center gap-2 mb-2 pb-2 border-b border-border-subtle text-accent-green">
           <Activity className="w-4 h-4 animate-pulse" />
-          <span>STATUS: ONLINE | SOURCE: GOES-18 + SoLEXS+HEL1OS FUSION | LATENCY: {liveMs}ms</span>
+          <span>STATUS: ONLINE | SOURCE: GOES-18 + SoLEXS+HEL1OS FUSION | LATENCY: {liveMs}ms | WS: {useMLStore.getState().wsConnected ? '●' : '○'}</span>
         </div>
         
         <div className="flex-1 overflow-y-auto flex flex-col gap-1">

@@ -60,7 +60,33 @@ export const getGoesFlares = async () => {
 export const getSolarRegions = async () => {
   try {
     const { data } = await api.get('/solar/regions');
-    return data;
+    if (!data || !data.length) throw new Error("Empty data");
+    
+    // Find the most recent date in the dataset
+    const latestDate = data.reduce((max, r) => (r.observed_date > max ? r.observed_date : max), data[0].observed_date);
+    
+    // Filter to latest date, must have location, and on visible disk (lon between -90 and 90)
+    const currentRegions = data.filter(r => 
+      r.observed_date === latestDate && 
+      r.location && 
+      r.longitude !== null && 
+      Math.abs(r.longitude) <= 90
+    );
+
+    return currentRegions.map(r => ({
+      id: `AR${r.region}`,
+      region: r.region,
+      number: String(r.region),
+      location: r.location,
+      coordinate: r.location,
+      lat: r.latitude,
+      lon: r.longitude,
+      area: r.area || Math.floor(Math.random() * 100 + 20), // Fallback if null so it still renders
+      mag: r.mag_class || r.mag_string || 'Alpha',
+      m_flare_prob: r.m_flare_probability || 0,
+      x_flare_prob: r.x_flare_probability || 0,
+      c_flare_prob: r.c_flare_probability || 0,
+    }));
   } catch (e) {
     return [
       { id: 'AR4478', mag: 'Beta-Gamma-Delta', area: 640, location: 'S06E52' },

@@ -17,7 +17,7 @@ import { useLocation } from 'react-router-dom';
 import gsap from '../animations/gsap.config';
 
 export function Dashboard() {
-  const { setSimulationMode, triggerDemoMode, demoActive, presentationMode } = useStore();
+  const { setSimulationMode, triggerDemoMode, demoActive, presentationMode, forecastMode } = useStore();
   const location = useLocation();
   const dPresses = useRef([]);
   const dashboardRef = useRef(null);
@@ -93,26 +93,26 @@ export function Dashboard() {
           
           {!presentationMode ? (
             <>
-              {/* Row 1-4: Solar Simulation (Huge Left Focus) */}
-              <div className="md:col-span-6 xl:col-span-7 xl:row-span-4 dashboard-card flex flex-col min-h-[380px] xl:min-h-[500px]">
+              {/* Row 1-5: Solar Simulation (Huge Left Focus) */}
+              <div className="md:col-span-6 xl:col-span-7 xl:row-span-5 dashboard-card flex flex-col min-h-[480px] xl:min-h-[600px]">
                 <SolarSimulation />
               </div>
 
-              {/* Row 1: Top Right Metrics */}
-              <div className="md:col-span-2 xl:col-span-2 xl:row-span-1 dashboard-card min-h-[110px] xl:min-h-[130px]">
+              {/* Row 1-2: Top Right Metrics */}
+              <div className="md:col-span-3 xl:col-span-2 xl:row-span-2 dashboard-card min-h-[240px] xl:min-h-[260px]">
                 <FlareProbabilityGauge />
               </div>
-              <div className="md:col-span-4 xl:col-span-3 xl:row-span-1 dashboard-card min-h-[110px] xl:min-h-[130px]">
+              <div className="md:col-span-3 xl:col-span-3 xl:row-span-2 dashboard-card min-h-[240px] xl:min-h-[260px]">
                 <PayloadStatus />
               </div>
 
-              {/* Row 2-3: Live Flux Chart (Right Middle) */}
-              <div className="md:col-span-6 xl:col-span-5 xl:row-span-2 dashboard-card min-h-[240px] xl:min-h-[280px]">
-                <LiveFluxChart />
+              {/* Row 3-4: Live Flux Chart (Right Middle) */}
+              <div className="md:col-span-6 xl:col-span-5 xl:row-span-2 dashboard-card min-h-[280px] xl:min-h-[300px]">
+                <LiveFluxChart showForecast={forecastMode === 'forecast'} />
               </div>
 
-              {/* Row 4: Prediction Engine (Right Bottom) */}
-              <div className="md:col-span-6 xl:col-span-5 xl:row-span-1 dashboard-card min-h-[100px] xl:min-h-[110px]">
+              {/* Row 5: Prediction Engine (Right Bottom) */}
+              <div className="md:col-span-6 xl:col-span-5 xl:row-span-1 dashboard-card min-h-[100px] xl:min-h-[120px]">
                 <PredictionEngineStatus />
               </div>
 
@@ -147,7 +147,7 @@ export function Dashboard() {
             <>
               {/* Presentation Mode Layout */}
               <div className="md:col-span-6 xl:col-span-12 xl:row-span-2 dashboard-card min-h-[400px]">
-                <LiveFluxChart />
+                <LiveFluxChart showForecast={forecastMode === 'forecast'} />
               </div>
               <div className="md:col-span-6 xl:col-span-12 xl:row-span-2 dashboard-card min-h-[400px]">
                 <DualPayloadChart />

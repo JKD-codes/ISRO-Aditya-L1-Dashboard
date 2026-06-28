@@ -1,5 +1,9 @@
 fastapi
-uvicorn
+uvicorn[standard]
 httpx
-astropy
 cachetools
+numpy
+scikit-learn
+xgboost
+scipy
+websockets

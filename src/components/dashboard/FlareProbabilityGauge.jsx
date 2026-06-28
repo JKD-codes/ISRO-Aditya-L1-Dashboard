@@ -88,17 +88,17 @@ export function FlareProbabilityGauge() {
   return (
     <GlowPulse active={isHighRisk} color={glowColor} className="h-full flex flex-col">
       <Card className="flex flex-col h-full flex-1">
-        <div className="flex justify-between items-center mb-4">
+        <div className="flex flex-col 2xl:flex-row justify-between items-start 2xl:items-center gap-3 mb-4">
           <div className="flex flex-col">
-            <h3 className="font-display text-sm tracking-wider font-bold">FLARE PROBABILITY (T+30M)</h3>
+            <h3 className="font-display text-[13px] tracking-wider font-bold">FLARE PROBABILITY (T+30M)</h3>
             <span className="font-mono text-[9px] text-accent-orange/70">XGBOOST ML FORECAST</span>
           </div>
 
-          <div className="flex bg-[#0A1929] rounded p-0.5 border border-border-subtle/50">
+          <div className="flex bg-[#0A1929] rounded p-0.5 border border-border-subtle/50 shrink-0">
             <button
               onClick={() => setForecastMode('nowcast')}
               className={cn(
-                "px-3 py-1 text-[10px] font-mono rounded transition-colors",
+                "px-2 py-1 text-[9px] font-mono rounded transition-colors",
                 forecastMode === 'nowcast' ? "bg-[#1E3A5F] text-white" : "text-text-secondary hover:text-white"
               )}
             >
@@ -107,7 +107,7 @@ export function FlareProbabilityGauge() {
             <button
               onClick={() => setForecastMode('forecast')}
               className={cn(
-                "px-3 py-1 text-[10px] font-mono rounded transition-colors",
+                "px-2 py-1 text-[9px] font-mono rounded transition-colors",
                 forecastMode === 'forecast' ? "bg-[#1E3A5F] text-white" : "text-text-secondary hover:text-white"
               )}
             >
@@ -116,22 +116,22 @@ export function FlareProbabilityGauge() {
           </div>
         </div>
 
-        <div className="flex-1 flex flex-col justify-center gap-6 pb-2">
+        <div className="flex-1 flex flex-col justify-center gap-4 pb-2">
           {/* Top Row: M and X (High Impact) */}
-          <div className="flex justify-around items-center px-4">
-            <GaugeArc value={t30Forecast.M || 0} label="M-CLASS" color="#FFB347" size={100} />
-            <GaugeArc value={t30Forecast.X || 0} label="X-CLASS" color="#FF3B3B" size={100} />
+          <div className="flex justify-around items-center px-1">
+            <GaugeArc value={t30Forecast.M || 0} label="M-CLASS" color="#FFB347" size={80} />
+            <GaugeArc value={t30Forecast.X || 0} label="X-CLASS" color="#FF3B3B" size={80} />
           </div>
 
           {/* Bottom Row: B and C (Low Impact) */}
-          <div className="flex justify-around items-center px-8 opacity-70">
-            <GaugeArc value={t30Forecast.B || 0} label="B-CLASS" color="#8FA3C0" size={70} />
-            <GaugeArc value={t30Forecast.C || 0} label="C-CLASS" color="#00E5A0" size={70} />
+          <div className="flex justify-around items-center px-4 opacity-70">
+            <GaugeArc value={t30Forecast.B || 0} label="B-CLASS" color="#8FA3C0" size={55} />
+            <GaugeArc value={t30Forecast.C || 0} label="C-CLASS" color="#00E5A0" size={55} />
           </div>
         </div>
 
-        <div className="flex justify-between items-center mt-auto pt-3 border-t-[0.5px] border-border-subtle/50 shrink-0">
-          <span className="font-mono text-[9px] text-text-secondary">ALGORITHM: XGBOOST REALTIME</span>
+        <div className="flex flex-wrap justify-between items-center mt-auto pt-3 border-t-[0.5px] border-border-subtle/50 shrink-0 gap-2">
+          <span className="font-mono text-[9px] text-text-secondary">ALG: XGBOOST REALTIME</span>
           <span className="font-mono text-[9px] text-text-secondary">COMPUTED: {computedTime}</span>
         </div>
       </Card>
