@@ -11,6 +11,7 @@ import { GroqInsightPanel } from '../components/dashboard/GroqInsightPanel';
 import { SpaceWeatherImpactPanel } from '../components/dashboard/SpaceWeatherImpactPanel';
 import { SolarWindMonitor } from '../components/dashboard/SolarWindMonitor';
 import { AlgorithmConfidenceFactors } from '../components/dashboard/AlgorithmConfidenceFactors';
+import { PipelineOutputRaw } from '../components/dashboard/PipelineOutputRaw';
 import { SpectralHardnessChart } from '../components/dashboard/SpectralHardnessChart';
 import { useStore } from '../store/useStore';
 import { useLocation } from 'react-router-dom';
@@ -138,9 +139,12 @@ export function Dashboard() {
                 <SpectralHardnessChart />
               </div>
 
-              {/* Row 8: Full Width Insight */}
-              <div className="md:col-span-6 xl:col-span-12 xl:row-span-1 dashboard-card min-h-[140px]">
+              {/* Row 8: Split Width Insight & Raw Output */}
+              <div className="md:col-span-4 xl:col-span-8 xl:row-span-1 dashboard-card min-h-[140px]">
                 <GroqInsightPanel />
+              </div>
+              <div className="md:col-span-2 xl:col-span-4 xl:row-span-1 dashboard-card min-h-[140px]">
+                <PipelineOutputRaw />
               </div>
             </>
           ) : (

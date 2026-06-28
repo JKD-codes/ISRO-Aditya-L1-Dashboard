@@ -1,11 +1,17 @@
 import { create } from 'zustand';
-import { getGoesXrays, getSolarProbs, getSolarRegions } from '../services/api';
+import { getGoesXrays, getSolarProbs, getSolarRegions, fetchNowcast, fetchForecast, fetchSoLEXS, fetchHEL1OS } from '../services/api';
 
 export const useStore = create((set, get) => ({
   // Simulation / Demo mode
   demoActive: false,
   demoTimer: null,
   demoTimeElapsed: 0,
+  
+  // Pipeline Data
+  pipelineNowcast: null,
+  pipelineForecast: null,
+  solexsData: null,
+  heliosData: null,
   
   // Goes Data and state
   goesData: [],
@@ -64,11 +70,31 @@ export const useStore = create((set, get) => ({
     flareEventFilters: { ...state.flareEventFilters, ...filters } 
   })),
 
+  fetchPipelineData: async () => {
+    try {
+      const [nowcast, forecast, solexs, helios] = await Promise.all([
+        fetchNowcast(),
+        fetchForecast(),
+        fetchSoLEXS(),
+        fetchHEL1OS()
+      ]);
+      set({
+        pipelineNowcast: nowcast,
+        pipelineForecast: forecast,
+        solexsData: solexs,
+        heliosData: helios
+      });
+    } catch (e) {
+      console.error("Failed to fetch pipeline data:", e);
+    }
+  },
+
   // Initialize and start periodic fetch
   initStore: async () => {
     // Initial fetch
     await get().fetchData();
     await get().fetchProbsAndRegions();
+    await get().fetchPipelineData();
 
     // Setup 60s interval for GOES
     const goesIntervalId = setInterval(() => {
@@ -84,6 +110,13 @@ export const useStore = create((set, get) => ({
       }
     }, 600000);
 
+    // Setup 30s interval for pipeline data
+    const pipelineIntervalId = setInterval(() => {
+      if (!get().demoActive) {
+        get().fetchPipelineData();
+      }
+    }, 30000);
+
     // Presentation mode listener
     const handleKeyDown = (e) => {
       if (e.key === 'p' || e.key === 'P') {
@@ -95,6 +128,7 @@ export const useStore = create((set, get) => ({
     return () => {
       clearInterval(goesIntervalId);
       clearInterval(probsIntervalId);
+      clearInterval(pipelineIntervalId);
       window.removeEventListener('keydown', handleKeyDown);
     };
   },
