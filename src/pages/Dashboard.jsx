@@ -90,7 +90,7 @@ export function Dashboard() {
 
       {/* Dynamic Asymmetric Grid Layout */}
       <div className="flex-1 w-full p-2 xl:p-4 overflow-y-auto custom-scrollbar relative z-10">
-        <div className="grid grid-cols-1 md:grid-cols-6 xl:grid-cols-12 gap-2 xl:gap-3 auto-rows-min pb-[100px]">
+        <div className="grid grid-cols-1 md:grid-cols-6 xl:grid-cols-12 gap-2 xl:gap-3 auto-rows-min">
           
           {!presentationMode ? (
             <>
