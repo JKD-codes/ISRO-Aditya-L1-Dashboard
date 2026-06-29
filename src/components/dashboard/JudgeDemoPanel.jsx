@@ -55,19 +55,11 @@ export function JudgeDemoPanel() {
 
   const handleSimulate = async (flareClass) => {
     try {
-      // 1. Fetch synthetic data
-      const res = await axios.get(`${API_BASE || 'http://localhost:8000'}/api/aditya/dual?flare=${flareClass}`);
-      if (res.data) {
-        const processedSolexs = (res.data.solexs || []).map(item => ({
-          ...item,
-          flux_log: item.flux > 0 ? Math.log10(item.flux) : 0
-        }));
-        
-        useMLStore.setState({
-          solexsLive: processedSolexs,
-          heliosLive: res.data.helios || []
-        });
-      }
+      // 1. Inject flare into backend data generator
+      const classLetter = flareClass.charAt(0);  // 'M2.0' -> 'M'
+      await axios.post(
+        `${API_BASE || 'http://localhost:8000'}/api/demo/trigger-flare?flare_class=${classLetter}`
+      );
 
       // 2. Trigger UI demo state
       triggerDemoMode(flareClass);
@@ -87,7 +79,7 @@ export function JudgeDemoPanel() {
 
     } catch (err) {
       console.error("Demo API error:", err);
-      // Fallback
+      // Fallback: still trigger UI demo even if backend injection fails
       triggerDemoMode(flareClass);
     }
   };

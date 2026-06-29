@@ -318,7 +318,7 @@ export function SolarSimulation() {
         ctx.globalCompositeOperation = 'source-over';
         ctx.font = '10px "Rajdhani"';
         ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
-        const text = String(ar.id || ar.number || ar.Region);
+        const text = String(ar.id || ar.number || ar.region || ar.Region || `AR${idx + 1}`);
         const tw = ctx.measureText(text).width;
         ctx.fillText(text, x - tw/2, y - 18);
         ctx.beginPath();

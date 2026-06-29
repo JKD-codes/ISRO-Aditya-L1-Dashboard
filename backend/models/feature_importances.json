@@ -1,0 +1,14 @@
+{
+  "solexs_flux_current": 0.0679,
+  "solexs_flux_mean_5min": 0.0942,
+  "solexs_flux_mean_15min": 0.1008,
+  "solexs_dflux_dt": 0.0578,
+  "solexs_d2flux_dt2": 0.0685,
+  "solexs_rise_rate_5min": 0.0809,
+  "helios_counts_current": 0.0571,
+  "helios_counts_mean_5min": 0.0511,
+  "helios_counts_std_5min": 0.0504,
+  "helios_spike_ratio": 0.1058,
+  "spectral_hardness_ratio": 0.1996,
+  "neupert_cross_corr": 0.0659
+}
