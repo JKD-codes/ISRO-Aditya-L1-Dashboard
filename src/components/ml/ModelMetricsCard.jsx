@@ -107,6 +107,16 @@ export function ModelMetricsCard() {
           Model: {modelMetrics?.model_version || 'N/A'}. TSS &gt; 0.5 indicates skill above random.
         </span>
       </div>
+
+      <div className="mt-3 p-3 bg-[#1A1A0A] rounded border border-[#FFB347]/30">
+        <div className="flex gap-2 items-start">
+          <span className="text-[#FFB347] text-[10px] font-bold shrink-0">⚠</span>
+          <span className="font-mono text-[9px] text-[#FFB347]/80 leading-relaxed">
+            {modelMetrics?.data_disclaimer ||
+              'Metrics computed on synthetic held-out data. Real-world performance on GOES/Aditya-L1 data will differ. Designed for PRADAN FITS data swap-in.'}
+          </span>
+        </div>
+      </div>
     </Card>
   );
 }

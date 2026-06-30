@@ -2,13 +2,23 @@ import React, { useMemo, useState, useEffect } from 'react';
 import { useStore } from '../store/useStore';
 import { DualPayloadChart } from '../components/dashboard/DualPayloadChart';
 import { Card } from '../components/ui/Card';
-import { gannonStormData } from '../data/gannonStorm';
+import { gannonStormData, fetchGannonStormData } from '../data/gannonStorm';
 import { getGoesFlares } from '../services/api';
 import { differenceInDays, format, subDays } from 'date-fns';
 
 export function PayloadHealth() {
   const { goesData } = useStore();
   const [flares, setFlares] = useState([]);
+  const [stormData, setStormData] = useState(gannonStormData);
+  const [dataSource, setDataSource] = useState('loading');
+
+  // Fetch real Gannon Storm data from API
+  useEffect(() => {
+    fetchGannonStormData().then(result => {
+      setStormData(result);
+      setDataSource(result.dataSource || 'synthetic_fallback');
+    });
+  }, []);
   
   // Calculate mission days
   const missionDays = useMemo(() => {
@@ -225,8 +235,9 @@ export function PayloadHealth() {
           </div>
           
           <DualPayloadChart 
-            data={gannonStormData} 
+            data={stormData} 
             title="ADITYA-L1 FORECASTING ALGORITHM PIPELINE"
+            dataSource={dataSource}
           />
         </div>
 

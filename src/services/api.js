@@ -179,4 +179,25 @@ export const getAdityaHelios = async () => {
   }
 };
 
+export const fetchNowcast = async () => {
+  try {
+    const { data } = await api.get('/pipeline/nowcast');
+    return data;
+  } catch (e) {
+    return [];
+  }
+};
+
+export const fetchForecast = async () => {
+  try {
+    const { data } = await api.get('/pipeline/forecast');
+    return data;
+  } catch (e) {
+    return [];
+  }
+};
+
+export const fetchSoLEXS = getAdityaSolexs;
+export const fetchHEL1OS = getAdityaHelios;
+
 export default api;

@@ -5,6 +5,7 @@ import xgboost as xgb
 import joblib
 from datetime import datetime, timedelta
 
+
 MODEL_PATH = os.path.join(os.path.dirname(__file__), 'model.pkl')
 
 def extract_features(solexs_series, helios_series):

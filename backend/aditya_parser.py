@@ -14,6 +14,24 @@ except ImportError:
 DATA_DIR = os.path.join(os.path.dirname(__file__), 'data')
 SOLEXS_DIR = os.path.join(DATA_DIR, 'solexs')
 HELIOS_DIR = os.path.join(DATA_DIR, 'helios')
+PROCESSED_DIR = os.path.join(DATA_DIR, 'processed')
+
+import json
+
+def _load_processed_json(filename: str):
+    """Load a pre-processed JSON file from PROCESSED_DIR if it exists.
+    Returns the parsed dict or None."""
+    path = os.path.join(PROCESSED_DIR, filename)
+    if os.path.exists(path):
+        try:
+            with open(path, 'r') as f:
+                data = json.load(f)
+            if data and data.get('timestamps') and len(data['timestamps']) > 0:
+                print(f"[aditya_parser] Loaded real processed data: {filename}")
+                return data
+        except Exception as e:
+            print(f"[aditya_parser] Failed to load {filename}: {e}")
+    return None
 
 def get_latest_fits_file(directory: str) -> str:
     """Finds the most recent FITS file in the given directory."""
@@ -42,7 +60,8 @@ def generate_mock_solexs():
             flux = base_flux + random.uniform(-1e-9, 1e-9)
         data.append({
             "time_tag": time.isoformat() + "Z",
-            "flux": max(1e-9, flux)
+            "flux": max(1e-9, flux),
+            "_data_source": "synthetic_mock"
         })
     return data
 
@@ -61,7 +80,8 @@ def generate_mock_helios():
             counts = base_counts + random.randint(-10, 10)
         data.append({
             "time_tag": time.isoformat() + "Z",
-            "counts_per_sec": max(0, counts)
+            "counts_per_sec": max(0, counts),
+            "_data_source": "synthetic_mock"
         })
     return data
 
@@ -69,8 +89,25 @@ def generate_mock_helios():
 def parse_solexs_fits(file_path: str = None):
     """
     Parses SoLEXS Level-1 FITS files.
-    Falls back to synthetic data if no file is found or parsing fails.
+    Priority: processed JSON > FITS file > synthetic mock.
     """
+    # ── Priority 1: Pre-processed real JSON (from parse_fits.py) ──
+    processed = _load_processed_json('solexs_20240510.json')
+    if processed:
+        # Convert parallel-array format to per-point objects for compatibility
+        result = []
+        for i in range(len(processed.get('timestamps', []))):
+            flux_val = processed['flux'][i] if i < len(processed.get('flux', [])) else None
+            result.append({
+                "time_tag": processed['timestamps'][i],
+                "flux": flux_val if flux_val is not None else 0,
+                "_data_source": "real_pradan",
+                "is_real_data": True
+            })
+        if result:
+            return result
+
+    # ── Priority 2: FITS file ──
     if not file_path:
         file_path = get_latest_fits_file(SOLEXS_DIR)
 
@@ -124,8 +161,24 @@ def parse_solexs_fits(file_path: str = None):
 def parse_helios_fits(file_path: str = None):
     """
     Parses HEL1OS Level-1 FITS files.
-    Falls back to synthetic data if no file is found or parsing fails.
+    Priority: processed JSON > FITS file > synthetic mock.
     """
+    # ── Priority 1: Pre-processed real JSON (from parse_fits.py) ──
+    processed = _load_processed_json('helios_20240510.json')
+    if processed:
+        result = []
+        for i in range(len(processed.get('timestamps', []))):
+            flux_val = processed['flux'][i] if i < len(processed.get('flux', [])) else None
+            result.append({
+                "time_tag": processed['timestamps'][i],
+                "counts_per_sec": flux_val if flux_val is not None else 0,
+                "_data_source": "real_pradan",
+                "is_real_data": True
+            })
+        if result:
+            return result
+
+    # ── Priority 2: FITS file ──
     if not file_path:
         file_path = get_latest_fits_file(HELIOS_DIR)
 

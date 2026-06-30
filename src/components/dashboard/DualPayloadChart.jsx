@@ -4,7 +4,7 @@ import { Card } from '../ui/Card';
 import { useStore } from '../../store/useStore';
 import { useGSAPEntrance } from '../../hooks/useGSAPEntrance';
 
-export function DualPayloadChart({ title }) {
+export function DualPayloadChart({ title, dataSource }) {
   const { solexsData, heliosData, pipelineNowcast } = useStore();
   const neupertResult = pipelineNowcast?.detection;
   
@@ -82,7 +82,21 @@ export function DualPayloadChart({ title }) {
             {neupertResult?.neupert_confirmed && (
               <span className="text-[#FFB347]">NEUPERT EFFECT DETECTED</span>
             )}
-            {isReal ? (
+            {/* Badge logic: dataSource prop (from Gannon pages) takes priority,
+                then fall back to store's is_real_data for live streaming view */}
+            {dataSource === 'real_pradan' ? (
+              <span className="px-2 py-0.5 rounded border border-[#00E5A0] bg-[#00E5A0]/10 text-[#00E5A0] font-bold">
+                REAL ADITYA-L1 DATA (MAY 10, 2024)
+              </span>
+            ) : dataSource === 'synthetic_fallback' ? (
+              <span className="px-2 py-0.5 rounded border border-[#FFB347] bg-[#FFB347]/10 text-[#FFB347] font-bold">
+                SYNTHETIC FALLBACK
+              </span>
+            ) : dataSource === 'loading' ? (
+              <span className="px-2 py-0.5 rounded border border-border-subtle bg-background-tertiary text-text-secondary font-bold animate-pulse">
+                LOADING...
+              </span>
+            ) : isReal ? (
               <span className="px-2 py-0.5 rounded border border-[#00E5A0] bg-[#00E5A0]/10 text-[#00E5A0] font-bold">
                 REAL ADITYA-L1 DATA
               </span>

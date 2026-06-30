@@ -10,3 +10,5 @@ joblib
 pandas
 scikit-learn
 websockets
+groq
+python-dotenv

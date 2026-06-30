@@ -932,3 +932,93 @@ class SolarFlarePipeline:
 
     def get_last_features(self) -> Dict[str, float]:
         return self._last_features
+class CatalogueValidator:
+    """Cross-validates Master Catalogue detections against NOAA GOES flare catalogue."""
+
+    @staticmethod
+    def validate_against_noaa(aditya_catalogue: List[Dict], noaa_data: List[Dict], time_window_min: float = 15.0) -> Dict:
+        """
+        Compare Aditya-L1 detections with NOAA GOES real flares.
+        Computes True Positive Rate (TPR), False Alarm Rate (FAR), and Lead Times.
+        """
+        if not noaa_data or not aditya_catalogue:
+            return {'status': 'insufficient_data'}
+
+        matches = []
+        false_alarms = []
+        misses = []
+        total_lead_time = 0.0
+
+        # Extract NOAA flares above background (>= B class)
+        noaa_flares = []
+        for n in noaa_data:
+            if 'max_class' in n and 'begin_time' in n and 'max_time' in n:
+                cls_str = n['max_class']
+                if cls_str and (cls_str.startswith('M') or cls_str.startswith('X') or cls_str.startswith('C') or cls_str.startswith('B')):
+                    try:
+                        n_begin = datetime.fromisoformat(n['begin_time'].replace('Z', '+00:00'))
+                        n_max = datetime.fromisoformat(n['max_time'].replace('Z', '+00:00'))
+                        noaa_flares.append({'class': cls_str, 'begin': n_begin, 'max': n_max, 'raw': n})
+                    except ValueError:
+                        pass
+
+        # Match Aditya detections to NOAA flares
+        matched_noaa_indices = set()
+        
+        for det in aditya_catalogue:
+            try:
+                d_time = datetime.fromisoformat(det['detection_time'].replace('Z', '+00:00'))
+            except ValueError:
+                continue
+
+            best_match = None
+            best_match_idx = -1
+            best_dt = float('inf')
+
+            for i, n in enumerate(noaa_flares):
+                # Check if detection falls within [begin - window, max + window]
+                # Real lead time: time between our detection and NOAA's actual peak (max_time)
+                dt_begin = (n['begin'] - d_time).total_seconds() / 60.0
+                dt_max = (n['max'] - d_time).total_seconds() / 60.0
+                
+                # If we detected it before peak, within reasonable window
+                if -time_window_min <= dt_max <= 60: # detected up to 60 mins before peak, or slightly after
+                    if abs(dt_max) < abs(best_dt):
+                        best_dt = dt_max
+                        best_match = n
+                        best_match_idx = i
+
+            if best_match:
+                matched_noaa_indices.add(best_match_idx)
+                lead_time = best_dt # positive means we detected it *before* GOES peak
+                total_lead_time += max(0, lead_time)
+                
+                matches.append({
+                    'aditya_detection': det,
+                    'noaa_flare': best_match['raw'],
+                    'lead_time_minutes': round(lead_time, 1),
+                    'class_match': (det.get('flare_class', '')[0] == best_match['class'][0]) if det.get('flare_class') else False
+                })
+            else:
+                false_alarms.append(det)
+
+        for i, n in enumerate(noaa_flares):
+            if i not in matched_noaa_indices:
+                misses.append(n['raw'])
+
+        tpr = len(matches) / max(1, len(matches) + len(misses))
+        far = len(false_alarms) / max(1, len(matches) + len(false_alarms))
+        avg_lead = total_lead_time / max(1, len(matches))
+
+        return {
+            'status': 'success',
+            'matches': matches,
+            'false_alarms': len(false_alarms),
+            'misses': len(misses),
+            'metrics': {
+                'TPR': round(tpr, 3),
+                'FAR': round(far, 3),
+                'average_lead_time_min': round(avg_lead, 1),
+                'total_validated': len(matches)
+            }
+        }

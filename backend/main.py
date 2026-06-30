@@ -13,6 +13,10 @@ import logging
 from datetime import datetime, timedelta, timezone
 from contextlib import asynccontextmanager
 from pathlib import Path
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # Legacy HEAD imports
 from aditya_parser import parse_solexs_fits, parse_helios_fits
@@ -262,6 +266,105 @@ async def get_forecast_local():
     return JSONResponse(status_code=500, content={"error": "Insufficient data for prediction"})
 
 # ---------------------------------------------------------------------------
+# Gannon Storm Endpoints (Real FITS data or synthetic fallback)
+# ---------------------------------------------------------------------------
+
+_GANNON_STORM_PROCESSED = Path(__file__).parent / 'data' / 'processed'
+
+
+def _generate_synthetic_gannon_solexs():
+    """Python port of the synthetic Gannon Storm SoLEXS generator."""
+    import math
+    peak_time = datetime(2024, 5, 10, 6, 54, 0, tzinfo=timezone.utc)
+    BACKGROUND = 1e-8
+    PEAK = 2.1e-4
+    timestamps = []
+    flux = []
+    for i in range(120):
+        offset_min = i - 60
+        t = peak_time + timedelta(minutes=offset_min)
+        timestamps.append(t.strftime('%Y-%m-%dT%H:%M:%SZ'))
+        if offset_min < -40:
+            f = BACKGROUND
+        elif offset_min < 0:
+            rise = (offset_min + 40) / 40
+            f = BACKGROUND * math.pow(PEAK / BACKGROUND, rise * rise)
+        else:
+            f = PEAK * math.exp(-offset_min / 28)
+        noise = 1 + (random.random() - 0.5) * 0.04
+        flux.append(max(1e-9, f * noise))
+    return {
+        "instrument": "SoLEXS",
+        "observation_date": "2024-05-10",
+        "event": "X2.2 Gannon Storm",
+        "units": "counts/second",
+        "timestamps": timestamps,
+        "flux": flux,
+        "is_real_data": False,
+        "data_source": "synthetic_fallback"
+    }
+
+
+def _generate_synthetic_gannon_helios():
+    """Python port of the synthetic Gannon Storm HEL1OS generator."""
+    import math
+    peak_time = datetime(2024, 5, 10, 6, 54, 0, tzinfo=timezone.utc)
+    BACKGROUND = 47
+    PEAK = 6200
+    timestamps = []
+    flux = []
+    for i in range(120):
+        offset_min = i - 60
+        t = peak_time + timedelta(minutes=offset_min)
+        timestamps.append(t.strftime('%Y-%m-%dT%H:%M:%SZ'))
+        helios_peak = offset_min + 3  # Neupert: HEL1OS peaks 3min before SoLEXS
+        if abs(helios_peak) < 8:
+            c = BACKGROUND + (PEAK - BACKGROUND) * math.exp(-helios_peak * helios_peak / 8)
+        else:
+            c = BACKGROUND + max(0, 50 * math.exp(-abs(helios_peak) / 3))
+        noise = 1 + (random.random() - 0.5) * 0.04
+        flux.append(max(0, round(c * noise)))
+    return {
+        "instrument": "HEL1OS",
+        "observation_date": "2024-05-10",
+        "event": "X2.2 Gannon Storm",
+        "units": "counts/second",
+        "timestamps": timestamps,
+        "flux": flux,
+        "is_real_data": False,
+        "data_source": "synthetic_fallback"
+    }
+
+
+@app.get("/api/gannon-storm/solexs")
+async def get_gannon_storm_solexs():
+    """Serve real Gannon Storm SoLEXS data if processed JSON exists, else synthetic."""
+    path = _GANNON_STORM_PROCESSED / "solexs_20240510.json"
+    if path.exists():
+        try:
+            data = json.loads(path.read_text())
+            data["data_source"] = "real_pradan"
+            return data
+        except Exception as e:
+            logger.error(f"Failed to load Gannon Storm SoLEXS: {e}")
+    return _generate_synthetic_gannon_solexs()
+
+
+@app.get("/api/gannon-storm/helios")
+async def get_gannon_storm_helios():
+    """Serve real Gannon Storm HEL1OS data if processed JSON exists, else synthetic."""
+    path = _GANNON_STORM_PROCESSED / "helios_20240510.json"
+    if path.exists():
+        try:
+            data = json.loads(path.read_text())
+            data["data_source"] = "real_pradan"
+            return data
+        except Exception as e:
+            logger.error(f"Failed to load Gannon Storm HEL1OS: {e}")
+    return _generate_synthetic_gannon_helios()
+
+
+# ---------------------------------------------------------------------------
 # NASA SDO Image Proxy
 # ---------------------------------------------------------------------------
 
@@ -380,6 +483,68 @@ async def get_ml_metrics():
         }
     return metrics
 
+@app.get("/api/ml/real-validation")
+async def get_ml_real_validation():
+    """Cross-validate pipeline detections against NOAA GOES catalogue."""
+    try:
+        # Get our catalogue
+        catalogue = pipeline.catalogue.get_catalogue(limit=200)
+        
+        # Fetch latest NOAA catalogue
+        url = "https://services.swpc.noaa.gov/json/goes/primary/xray-flares-7-day.json"
+        noaa_data = await fetch_noaa(url, "goes_flares_validation")
+        
+        from ml_engine import CatalogueValidator
+        validation = CatalogueValidator.validate_against_noaa(catalogue, noaa_data)
+        return validation
+    except Exception as e:
+        logger.error(f"Error validating against NOAA: {e}")
+        return JSONResponse(status_code=500, content={"error": str(e)})
+
+# ---------------------------------------------------------------------------
+# AI Insight Proxy (Groq)
+# ---------------------------------------------------------------------------
+from pydantic import BaseModel
+
+class InsightRequest(BaseModel):
+    flux: float
+    forecastProbs: dict
+    neupert: dict
+    activeRegions: dict = None
+
+@app.post("/api/ai/insight")
+async def get_ai_insight(req: InsightRequest):
+    api_key = os.getenv("GROQ_API_KEY")
+    if not api_key:
+        return JSONResponse(status_code=503, content={"error": "GROQ_API_KEY not configured on server"})
+
+    try:
+        from groq import AsyncGroq
+        client = AsyncGroq(api_key=api_key)
+        
+        prompt = f"""
+You are an expert solar physicist analyzing live satellite data for an ISRO solar dashboard. 
+Provide exactly a 3-sentence insight about the current solar activity and flare risk.
+
+Data summary:
+- Current X-ray Flux (SoLEXS): {req.flux}
+- Forecast (T+30 mins) probabilities: {json.dumps(req.forecastProbs)}
+- Neupert Effect (Hard X-ray lead): {'Confirmed with ' + str(req.neupert.get('lead_mins', 0)) + ' mins lead time' if req.neupert.get('confirmed') else 'Not confirmed'}
+- Most complex Active Region: {req.activeRegions.get('id') if req.activeRegions else 'Unknown'} ({req.activeRegions.get('mag') if req.activeRegions else 'Unknown'})
+
+Return only the 3-sentence insight string, with no additional formatting or introductory text.
+"""
+        completion = await client.chat.completions.create(
+            messages=[{"role": "user", "content": prompt}],
+            model="llama-3-70b-8192",
+            temperature=0.3,
+            max_tokens=200,
+        )
+        return {"insight": completion.choices[0].message.content}
+    except Exception as e:
+        logger.error(f"Error generating Groq insight: {e}")
+        return JSONResponse(status_code=500, content={"error": str(e)})
+
 
 @app.get("/api/ml/features")
 async def get_ml_features():
@@ -478,4 +643,3 @@ async def websocket_realtime(ws: WebSocket):
         if ws in ws_clients:
             ws_clients.remove(ws)
         logger.error(f"WebSocket error: {e}")
->>>>>>> origin/xgboost-nowcasting-engine

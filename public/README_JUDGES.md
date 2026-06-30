@@ -11,7 +11,7 @@
 ## Key Differentiators
 - Neupert Effect detection: HEL1OS hard X-ray leads SoLEXS soft X-ray by 1–5 min
 - This early warning is IMPOSSIBLE with GOES-only monitoring
-- XGBoost classifier: TSS=0.74, POD=0.81 (above climatological skill)
+- XGBoost classifier: TSS=0.74, POD=0.81 (above climatological skill) *(computed on synthetic held-out test set; will be revalidated on real PRADAN data)*
 - Real-time WebSocket push, sub-50ms latency
 
 ## Routes

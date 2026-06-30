@@ -141,6 +141,39 @@ export function ModelEvaluationPanel() {
         </div>
       </div>
 
+      {/* Real-Time Validation */}
+      {useMLStore(state => state.realValidation) && useMLStore(state => state.realValidation).status === 'success' && (
+        <div className="mt-4 p-3 bg-[#111827] rounded border border-[#00E5A0]/50 relative overflow-hidden">
+          <div className="absolute top-0 right-0 p-1 bg-[#00E5A0]/20 text-[#00E5A0] text-[8px] font-bold tracking-widest font-mono">LIVE MATCH</div>
+          <div className="font-mono text-[10px] text-white font-bold mb-3 tracking-widest uppercase text-[#00E5A0]">
+            Real-Time Validation (vs NOAA GOES)
+          </div>
+          <div className="grid grid-cols-3 gap-2">
+            <div className="flex flex-col">
+              <span className="text-[9px] font-mono text-text-secondary">REAL TPR</span>
+              <span className="text-sm font-mono text-[#00E5A0]">
+                {((useMLStore(state => state.realValidation).metrics.TPR || 0) * 100).toFixed(1)}%
+              </span>
+            </div>
+            <div className="flex flex-col">
+              <span className="text-[9px] font-mono text-text-secondary">REAL FAR</span>
+              <span className="text-sm font-mono text-[#FF3B3B]">
+                {((useMLStore(state => state.realValidation).metrics.FAR || 0) * 100).toFixed(1)}%
+              </span>
+            </div>
+            <div className="flex flex-col">
+              <span className="text-[9px] font-mono text-text-secondary">AVG LEAD (MIN)</span>
+              <span className="text-sm font-mono text-[#4FC3F7]">
+                +{useMLStore(state => state.realValidation).metrics.average_lead_time_min?.toFixed(1)}m
+              </span>
+            </div>
+          </div>
+          <div className="mt-2 text-[9px] font-mono text-text-secondary leading-tight">
+            Validated {useMLStore(state => state.realValidation).metrics.total_validated} real-time matches against live GOES catalogue (last 7 days).
+          </div>
+        </div>
+      )}
+
       {/* Data disclaimer */}
       <div className="mt-3 p-3 bg-[#1A1A0A] rounded border border-[#FFB347]/30">
         <div className="flex gap-2 items-start">

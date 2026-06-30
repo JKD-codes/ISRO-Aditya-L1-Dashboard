@@ -25,6 +25,7 @@ const useMLStore = create((set, get) => ({
 
   // ===== NEW: Model Metrics =====
   modelMetrics: null,        // { accuracy, TSS, HSS, TPR, FAR, confusion_matrix, per_class }
+  realValidation: null,      // { matches, misses, false_alarms, metrics: { TPR, FAR, avg_lead } }
 
   // ===== NEW: Feature Importances =====
   featureImportances: null,  // { feature_importances: {name: value}, feature_names: [] }
@@ -139,6 +140,16 @@ const useMLStore = create((set, get) => ({
     }
   },
 
+  // ----- NEW: Real Validation -----
+  fetchRealValidation: async () => {
+    try {
+      const res = await axios.get(`${API_BASE}/api/ml/real-validation`);
+      set({ realValidation: res.data });
+    } catch (error) {
+      console.error('Error fetching real validation:', error);
+    }
+  },
+
   // ----- NEW: Feature Importances -----
   fetchFeatureImportances: async () => {
     try {
@@ -191,6 +202,10 @@ const useMLStore = create((set, get) => ({
 
     // Poll model metrics every 5 minutes (rarely changes)
     setInterval(() => { get().fetchModelMetrics(); }, 300000);
+
+    // Poll real validation every 2 minutes
+    get().fetchRealValidation();
+    setInterval(() => { get().fetchRealValidation(); }, 120000);
   }
 }));
 
