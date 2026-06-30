@@ -63,7 +63,7 @@ export function ActiveRegionTable() {
 
               return (
                 <tr 
-                  key={regionNum || i} 
+                  key={regionNum !== '----' && regionNum !== 'undefined' ? regionNum : `ar-${i}`} 
                   className={cn(
                     "border-b-[0.5px] border-border-subtle/20 hover:bg-white/[0.02] transition-colors",
                     isTarget && "bg-[rgba(255,107,0,0.08)]"

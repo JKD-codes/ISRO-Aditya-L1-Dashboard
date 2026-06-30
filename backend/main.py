@@ -508,9 +508,9 @@ from pydantic import BaseModel
 
 class InsightRequest(BaseModel):
     flux: float
-    forecastProbs: dict
-    neupert: dict
-    activeRegions: dict = None
+    forecastProbs: dict = {}
+    neupert: dict = {}
+    activeRegions: dict = {}
 
 @app.post("/api/ai/insight")
 async def get_ai_insight(req: InsightRequest):

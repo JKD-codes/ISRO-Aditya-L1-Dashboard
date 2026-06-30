@@ -164,18 +164,36 @@ export const checkApiHealth = async () => {
 export const getAdityaSolexs = async () => {
   try {
     const { data } = await api.get('/aditya/solexs');
+    if (data.data && Array.isArray(data.data)) {
+      return {
+        timestamps: data.data.map(d => d.time_tag),
+        flux: data.data.map(d => d.flux),
+        is_real_data: false,
+        data_source: "rolling_live"
+      };
+    }
     return data;
   } catch (e) {
-    return [{ time: new Date().toISOString(), flux: generateMockFlux() * 1.5 }];
+    const now = new Date();
+    return { timestamps: [now.toISOString()], flux: [generateMockFlux() * 1.5] };
   }
 };
 
 export const getAdityaHelios = async () => {
   try {
     const { data } = await api.get('/aditya/helios');
+    if (data.data && Array.isArray(data.data)) {
+      return {
+        timestamps: data.data.map(d => d.time_tag),
+        flux: data.data.map(d => d.flux),
+        is_real_data: false,
+        data_source: "rolling_live"
+      };
+    }
     return data;
   } catch (e) {
-    return [{ time: new Date().toISOString(), flux: generateMockFlux() * 0.3 }];
+    const now = new Date();
+    return { timestamps: [now.toISOString()], flux: [generateMockFlux() * 0.3] };
   }
 };
 

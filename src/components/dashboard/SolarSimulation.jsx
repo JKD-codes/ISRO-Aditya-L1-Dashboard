@@ -277,7 +277,7 @@ export function SolarSimulation() {
         const data = await res.json();
         
         if (mounted && data && data.id) {
-          const imgUrl = `https://api.helioviewer.org/v2/downloadFile/?id=${data.id}`;
+          const imgUrl = `https://api.helioviewer.org/v2/downloadImage/?id=${data.id}&scale=1`;
           const img = new Image();
           img.crossOrigin = 'Anonymous';
           img.onload = () => { if (mounted) setSdoImage(img); };

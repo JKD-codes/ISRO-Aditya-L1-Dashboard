@@ -92,35 +92,39 @@ export function SpectralHardnessChart() {
             WAITING FOR GOES XRS DATA...
           </div>
         ) : (
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={data} margin={{ top: 15, right: 10, left: -25, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="2 2" stroke="rgba(255,255,255,0.05)" />
-              <XAxis dataKey="time_tag" hide />
-              <YAxis domain={['auto', 'auto']} stroke="#8FA3C0" fontSize={9} fontFamily="monospace" tickCount={5} axisLine={false} tickLine={false} />
-              <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(255,255,255,0.05)' }} />
+          <div style={{ flex: '1 1 0%', minHeight: 0, width: '100%' }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={data} margin={{ top: 15, right: 10, left: -25, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="2 2" stroke="rgba(255,255,255,0.05)" />
+                <XAxis dataKey="time_tag" hide />
+                <YAxis domain={['auto', 'auto']} stroke="#8FA3C0" fontSize={9} fontFamily="monospace" tickCount={5} axisLine={false} tickLine={false} />
+                <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(255,255,255,0.05)' }} />
 
-              <defs>
-                <linearGradient id="ratioGrad" x1="0" y1="0" x2="1" y2="0">
-                  {data.map((d, i) => (
-                    <stop
-                      key={i}
-                      offset={`${(i / Math.max(data.length - 1, 1)) * 100}%`}
-                      stopColor={d.isDrop ? '#FFB347' : '#00E5A0'}
-                    />
-                  ))}
-                </linearGradient>
-              </defs>
-
-              <Line
-                type="monotone"
-                dataKey="logRatio"
-                stroke="url(#ratioGrad)"
-                strokeWidth={2}
-                dot={false}
-                isAnimationActive={false}
-              />
-            </LineChart>
-          </ResponsiveContainer>
+                <defs>
+                  <linearGradient id="ratioGrad" x1="0" y1="0" x2="1" y2="0">
+                    {data.map((d, i) => (
+                      <stop
+                        key={i}
+                        offset={`${(i / Math.max(data.length - 1, 1)) * 100}%`}
+                        stopColor={d.isDrop ? '#FFB347' : '#00E5A0'}
+                      />
+                    ))}
+                  </linearGradient>
+                </defs>
+                
+                <ReferenceLine y={0} stroke="rgba(255,255,255,0.1)" strokeDasharray="3 3" />
+                
+                <Line
+                  type="monotone"
+                  dataKey="logRatio"
+                  stroke="url(#ratioGrad)"
+                  strokeWidth={2}
+                  dot={false}
+                  isAnimationActive={false}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
         )}
 
         {/* Annotation */}

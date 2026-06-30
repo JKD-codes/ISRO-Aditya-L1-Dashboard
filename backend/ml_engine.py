@@ -614,10 +614,10 @@ class FlareForecaster:
             f1 = 2 * precision * tpr / max(precision + tpr, 1e-10)
 
             metrics[cls] = {
-                'TPR': round(tpr, 4),
-                'FAR': round(far, 4),
-                'precision': round(precision, 4),
-                'f1': round(f1, 4),
+                'TPR': round(float(tpr), 4),
+                'FAR': round(float(far), 4),
+                'precision': round(float(precision), 4),
+                'f1': round(float(f1), 4),
             }
 
         # Overall metrics
@@ -638,7 +638,7 @@ class FlareForecaster:
         hss = (accuracy - expected_correct) / max(1 - expected_correct, 1e-10)
 
         self._training_metrics = {
-            'accuracy': round(accuracy, 4),
+            'accuracy': round(float(accuracy), 4),
             'TSS': round(float(tss), 4),
             'HSS': round(float(hss), 4),
             'TPR': round(float(tpr_avg), 4),
@@ -1016,9 +1016,9 @@ class CatalogueValidator:
             'false_alarms': len(false_alarms),
             'misses': len(misses),
             'metrics': {
-                'TPR': round(tpr, 3),
-                'FAR': round(far, 3),
-                'average_lead_time_min': round(avg_lead, 1),
+                'TPR': round(float(tpr), 3),
+                'FAR': round(float(far), 3),
+                'average_lead_time_min': round(float(avg_lead), 1),
                 'total_validated': len(matches)
             }
         }
