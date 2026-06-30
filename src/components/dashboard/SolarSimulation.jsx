@@ -46,7 +46,7 @@ const FRAGMENT_SHADER_SRC = `
   float fbm(vec3 p) {
     float v = 0.0;
     float a = 0.5;
-    for (int i = 0; i < 3; i++) {
+    for (int i = 0; i < 4; i++) { // Ultra-high fidelity (4 octaves)
       v += a * noise(p);
       p *= 2.0;
       a *= 0.5;
@@ -55,92 +55,206 @@ const FRAGMENT_SHADER_SRC = `
   }
 
   void main() {
+    float rot = uTime * 0.015;
     vec2 uv = (vUv - 0.5) * 2.0;
     uv.x *= uAspect;
     
     float radius = 0.75;
+    
+    // High-fidelity edge noise perturbation
+    float angle = atan(uv.y, uv.x);
+    float edgeNoise = fbm(vec3(cos(angle * 8.0) * 1.5, sin(angle * 8.0) * 1.5, uTime * 0.03)) * 0.014;
+    float perturbedRadius = radius + edgeNoise;
+    
     float d = length(uv);
     
     vec3 baseColor = vec3(0.0);
+    float alpha = 1.0;
     
-    // Outer Corona glow
-    float coronaGlow = 0.0;
-    if (d > radius) {
-      coronaGlow = exp(-(d - radius) * 4.5);
-      if (uFilterMode == 0.0) {
-        baseColor = vec3(1.0, 0.35, 0.05) * coronaGlow * (uDemoActive > 0.5 ? 0.6 : 0.4);
-      } else if (uFilterMode == 1.0) {
-        baseColor = vec3(0.0, 0.8, 0.5) * coronaGlow * (uDemoActive > 0.5 ? 0.5 : 0.35);
-      } else {
-        baseColor = vec3(0.05, 0.3, 0.8) * coronaGlow * 0.15;
+    if (d > perturbedRadius) {
+      // Outer Corona glow (volumetric double-exponential halo + coronal ray streamers)
+      float glowInner = exp(-(d - perturbedRadius) * 7.5);
+      float glowOuter = exp(-(d - perturbedRadius) * 2.2) * 0.35;
+      
+      // High-fidelity multi-frequency coronal rays
+      float rayNoise1 = fbm(vec3(cos(angle * 3.0) * 1.5, sin(angle * 3.0) * 1.5, uTime * 0.02));
+      float rayNoise2 = fbm(vec3(cos(angle * 14.0) * 2.0, sin(angle * 14.0) * 2.0, -uTime * 0.05));
+      float rayStrength = mix(rayNoise1, rayNoise2, 0.4);
+      
+      float spikes = pow(rayStrength, 2.5) * 1.6;
+      float rayGlow = exp(-(d - perturbedRadius) * 1.5) * spikes * 0.35;
+      
+      float totalGlow = glowInner + glowOuter + rayGlow;
+      
+      if (uFilterMode == 0.0) { // AIA Gold
+        baseColor = vec3(1.0, 0.52, 0.06) * totalGlow * (uDemoActive > 0.5 ? 0.95 : 0.55);
+        baseColor += vec3(1.0, 0.9, 0.4) * glowInner * 0.25; // White-hot inner corona
+      } else if (uFilterMode == 1.0) { // SoLEXS Teal
+        baseColor = vec3(0.0, 0.88, 0.6) * totalGlow * (uDemoActive > 0.5 ? 0.8 : 0.45);
+      } else { // HEL1OS Blue
+        baseColor = vec3(0.05, 0.42, 0.98) * totalGlow * 0.3;
       }
-      gl_FragColor = vec4(baseColor, coronaGlow * 0.5);
-      return;
-    }
-    
-    // 3D Sphere projection
-    float z = sqrt(radius * radius - d * d);
-    vec3 N = normalize(vec3(uv.x, uv.y, z));
-    
-    // Y-axis rotation
-    float rot = uTime * 0.015;
-    vec3 rotatedP = vec3(N.x * cos(rot) - N.z * sin(rot), N.y, N.x * sin(rot) + N.z * cos(rot));
-    
-    // Solar texture
-    float n = fbm(rotatedP * 9.0 + vec3(0.0, 0.0, uTime * 0.05));
-    
-    // Limb darkening
-    float mu = N.z;
-    float limb = pow(mu, 0.6);
-    
-    float intensity = n * limb;
-    
-    // SDO Texture mapping (if loaded)
-    if (uUseSdoTexture > 0.5) {
-      float lon = atan(N.x, N.z) + rot;
-      float lat = asin(N.y);
-      vec2 texUv = vec2(lon / (2.0 * 3.14159) + 0.5, lat / 3.14159 + 0.5);
-      vec4 texColor = texture2D(uSdoTexture, texUv);
-      intensity = mix(intensity, texColor.r * limb * 1.6, 0.5);
-    }
-    
-    // Active Region Hotspots
-    float arGlowTotal = 0.0;
-    for (int i = 0; i < 4; i++) {
-      vec3 arPos = uActiveRegions[i];
-      // Only render if on front-facing side of the rotating sphere
-      vec3 rotArPos = vec3(arPos.x * cos(rot) - arPos.z * sin(rot), arPos.y, arPos.x * sin(rot) + arPos.z * cos(rot));
-      if (rotArPos.z > 0.0) {
-        float arDist = distance(N, rotArPos);
-        float arGlow = exp(-arDist * arDist * 60.0) * uARIntensities[i];
-        
-        // Erupting flare (AR4478 is index 0)
-        if (uDemoActive > 0.5 && i == 0) {
-          float flareCycle = mod(uTime * 5.0, 150.0);
-          float fAlpha = 0.0;
-          if (flareCycle < 30.0) fAlpha = flareCycle / 30.0;
-          else if (flareCycle < 150.0) fAlpha = 1.0 - (flareCycle - 30.0) / 120.0;
-          
-          arGlow += exp(-arDist * arDist * 180.0) * fAlpha * 12.0;
-        }
-        arGlowTotal += arGlow;
-      }
-    }
-    
-    // Color bands
-    if (uFilterMode == 0.0) {
-      baseColor = vec3(1.0, 0.55, 0.08) * intensity + vec3(1.0, 0.85, 0.6) * arGlowTotal;
-    } else if (uFilterMode == 1.0) {
-      baseColor = vec3(0.0, 0.7, 0.45) * intensity + vec3(0.6, 1.0, 0.85) * arGlowTotal;
+      alpha = totalGlow * 0.7;
     } else {
-      baseColor = vec3(0.02, 0.08, 0.22) * intensity + vec3(0.5, 0.75, 1.0) * arGlowTotal;
+      // 3D Sphere projection
+      float z = sqrt(max(0.0, perturbedRadius * perturbedRadius - d * d));
+      vec3 N = normalize(vec3(uv.x, uv.y, z));
+      
+      // Y-axis rotation
+      vec3 rotatedP = vec3(N.x * cos(rot) - N.z * sin(rot), N.y, N.x * sin(rot) + N.z * cos(rot));
+      
+      // Domain warping (coordinate perturbation using fbm noise)
+      vec3 warp = vec3(
+        fbm(rotatedP * 4.0),
+        fbm(rotatedP * 4.0 + vec3(31.4, 15.8, 9.2)),
+        fbm(rotatedP * 4.0 + vec3(1.2, 8.5, 23.1))
+      );
+      vec3 warpedP = rotatedP + warp * 0.42;
+      
+      // Solar texture with multi-layered noise for high-definition granulation
+      float n1 = fbm(warpedP * 6.5 + vec3(0.0, 0.0, uTime * 0.02));
+      float n2 = fbm(warpedP * 16.0 - vec3(0.0, 0.0, uTime * 0.04));
+      float n = mix(n1, n2, 0.38);
+      
+      // Add high-frequency solar surface turbulence
+      float turbulentNoise = abs(noise(warpedP * 30.0 + vec3(0.0, uTime * 0.05, 0.0)) - 0.5);
+      n = n * 0.8 + (1.0 - turbulentNoise) * 0.2;
+      n = pow(n, 1.8) * 1.5;
+      
+      // Reintroduce Physical Bump Mapping for 3D depth!
+      float eps = 0.015;
+      float n_x = fbm(warpedP + vec3(eps, 0.0, 0.0));
+      float n_y = fbm(warpedP + vec3(0.0, eps, 0.0));
+      vec3 bumpNormal = normalize(N + vec3(n_x - n, n_y - n, 0.0) * 0.32);
+      
+      // Limb darkening calculated with bump normal
+      float mu = bumpNormal.z;
+      float limb = pow(max(mu, 0.0), 0.65);
+      
+      // Directional shading for 3D depth
+      float diffuse = dot(bumpNormal, normalize(vec3(0.2, 0.2, 1.0)));
+      float shading = smoothstep(-0.3, 1.0, diffuse);
+      
+      float intensity = n * limb * (0.65 + 0.35 * shading);
+      
+      // SDO Texture mapping (if loaded)
+      if (uUseSdoTexture > 0.5) {
+        float lon = atan(N.x, N.z) + rot;
+        float lat = asin(N.y);
+        vec2 texUv = vec2(lon / (2.0 * 3.14159) + 0.5, lat / 3.14159 + 0.5);
+        vec4 texColor = texture2D(uSdoTexture, texUv);
+        intensity = mix(intensity, texColor.r * limb * 2.2, 0.65);
+      }
+      
+      // Active Region Hotspots
+      float arGlowTotal = 0.0;
+      for (int i = 0; i < 4; i++) {
+        vec3 arPos = uActiveRegions[i];
+        vec3 rotArPos = vec3(arPos.x * cos(rot) - arPos.z * sin(rot), arPos.y, arPos.x * sin(rot) + arPos.z * cos(rot));
+        if (rotArPos.z > 0.0) {
+          float arDist = distance(N, rotArPos);
+          float arGlow = exp(-arDist * arDist * 60.0) * uARIntensities[i];
+          arGlowTotal += arGlow;
+        }
+      }
+      
+      // Dynamic color gradient mapping based on real NASA/SDO filters
+      if (uFilterMode == 0.0) { // AIA 171 (Vibrant gold-yellow)
+        vec3 colDark = vec3(0.18, 0.03, 0.0);
+        vec3 colMid = vec3(1.0, 0.52, 0.05);
+        vec3 colBright = vec3(1.0, 0.98, 0.72);
+        baseColor = mix(mix(colDark, colMid, clamp(intensity * 1.1, 0.0, 1.0)), colBright, clamp((intensity - 0.7) * 2.5, 0.0, 1.0));
+        baseColor += vec3(1.0, 0.95, 0.78) * arGlowTotal * 2.0;
+      } else if (uFilterMode == 1.0) { // SoLEXS (Green/Teal Magnetogram)
+        vec3 colDark = vec3(0.0, 0.05, 0.03);
+        vec3 colMid = vec3(0.0, 0.82, 0.52);
+        vec3 colBright = vec3(0.7, 1.0, 0.9);
+        baseColor = mix(mix(colDark, colMid, clamp(intensity * 1.2, 0.0, 1.0)), colBright, clamp((intensity - 0.75) * 2.0, 0.0, 1.0));
+        baseColor += vec3(0.7, 1.0, 0.95) * arGlowTotal * 2.0;
+      } else { // HEL1OS (Deep Blue/Corona context)
+        vec3 colDark = vec3(0.01, 0.03, 0.12);
+        vec3 colMid = vec3(0.05, 0.35, 0.85);
+        vec3 colBright = vec3(0.6, 0.85, 1.0);
+        baseColor = mix(mix(colDark, colMid, clamp(intensity * 1.2, 0.0, 1.0)), colBright, clamp((intensity - 0.75) * 2.0, 0.0, 1.0));
+        baseColor += vec3(0.5, 0.85, 1.0) * arGlowTotal * 2.0;
+      }
+      
+      // Rim highlight
+      float rim = pow(max(1.0 - mu, 0.0), 4.0);
+      baseColor += rim * 0.1 * vec3(1.0);
+      alpha = 1.0;
     }
     
-    // Rim highlight
-    float rim = pow(1.0 - mu, 4.0);
-    baseColor += rim * 0.1 * vec3(1.0);
+    // TRUE 3D MAGNETIC FLARE ERUPTION OVERLAY
+    if (uDemoActive > 0.5) {
+      vec3 arPos = uActiveRegions[0];
+      vec3 rotArPos = vec3(arPos.x * cos(rot) - arPos.z * sin(rot), arPos.y, arPos.x * sin(rot) + arPos.z * cos(rot));
+      vec3 tangent = normalize(cross(rotArPos, vec3(0.1, 1.0, -0.1)));
+      
+      float flareCycle = mod(uTime * 5.0, 150.0);
+      float fAlpha = 0.0;
+      if (flareCycle < 30.0) fAlpha = flareCycle / 30.0;
+      else if (flareCycle < 150.0) fAlpha = 1.0 - (flareCycle - 30.0) / 120.0;
+      
+      float flareGlow = 0.0;
+      float coreGlow = 0.0;
+      
+      // 1. Magnetic Plasma Loop Arc
+      for (int j = 0; j < 25; j++) {
+        float t = float(j) / 24.0;
+        float arcAngle = (t - 0.5) * 0.45; // arc width
+        vec3 surfPos = rotArPos * cos(arcAngle) + tangent * sin(arcAngle);
+        
+        float height = 0.38 * 4.0 * t * (1.0 - t);
+        vec3 p3d = surfPos * (radius + height);
+        
+        if (p3d.z < 0.0 && length(p3d.xy) < radius * 0.97) continue;
+        
+        float dist = length(uv - p3d.xy);
+        float flow = mod(uTime * 4.0 - t * 6.0, 1.0);
+        float brightness = (0.2 + 1.8 * flow);
+        
+        flareGlow += exp(-dist * dist * 3500.0) * brightness * fAlpha * 1.2;
+        coreGlow += exp(-dist * dist * 12000.0) * brightness * fAlpha * 2.0;
+      }
+      
+      // 2. CME Ejection Jet
+      for (int k = 0; k < 15; k++) {
+        float t = float(k) / 14.0;
+        vec3 p3d = rotArPos * (radius + t * 0.85);
+        if (p3d.z < 0.0 && length(p3d.xy) < radius * 0.97) continue;
+        
+        float dist = length(uv - p3d.xy);
+        float flow = mod(uTime * 5.0 - t * 8.0, 1.0);
+        float brightness = (0.1 + 1.9 * flow);
+        
+        flareGlow += exp(-dist * dist * 2500.0) * brightness * fAlpha * (1.0 - t) * 1.5;
+      }
+      
+      // 3. Core Flash
+      if (rotArPos.z > -0.1) {
+         float arDist = length(uv - rotArPos.xy);
+         if (!(rotArPos.z < 0.0 && arDist < radius * 0.97)) {
+             coreGlow += exp(-arDist * arDist * 250.0) * fAlpha * 3.0;
+         }
+      }
+      
+      if (uFilterMode == 0.0) {
+        baseColor += vec3(1.0, 0.5, 0.1) * flareGlow;
+        baseColor += vec3(1.0, 0.9, 0.7) * coreGlow;
+      } else if (uFilterMode == 1.0) {
+        baseColor += vec3(0.0, 0.8, 0.5) * flareGlow;
+        baseColor += vec3(0.7, 1.0, 0.9) * coreGlow;
+      } else {
+        baseColor += vec3(0.1, 0.4, 1.0) * flareGlow;
+        baseColor += vec3(0.6, 0.8, 1.0) * coreGlow;
+      }
+      
+      // Add flare opacity to corona background
+      alpha = min(1.0, alpha + (flareGlow + coreGlow) * fAlpha);
+    }
     
-    gl_FragColor = vec4(baseColor, 1.0);
+    gl_FragColor = vec4(baseColor, alpha);
   }
 `;
 
@@ -423,9 +537,13 @@ export function SolarSimulation() {
 
     const renderWebGL = () => {
       const rect = container.getBoundingClientRect();
-      if (canvas.width !== rect.width || canvas.height !== rect.height) {
-        canvas.width = rect.width;
-        canvas.height = rect.height;
+      const dpr = window.devicePixelRatio || 1;
+      const targetW = Math.floor(rect.width * dpr);
+      const targetH = Math.floor(rect.height * dpr);
+      
+      if (canvas.width !== targetW || canvas.height !== targetH) {
+        canvas.width = targetW;
+        canvas.height = targetH;
         gl.viewport(0, 0, canvas.width, canvas.height);
       }
 
@@ -499,7 +617,7 @@ export function SolarSimulation() {
       </div>
 
       <div ref={containerRef} className="flex-1 w-full relative min-h-[300px]">
-        <canvas ref={canvasRef} className="absolute inset-0 block z-0" />
+        <canvas ref={canvasRef} className="absolute inset-0 w-full h-full block z-0" />
         <SolarParticles trigger={activeAlert !== null} />
         
         {/* HTML/CSS Active Region Markers synced in 3D projection overlay */}
