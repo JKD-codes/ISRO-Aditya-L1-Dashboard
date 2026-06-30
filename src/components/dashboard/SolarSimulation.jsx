@@ -589,21 +589,21 @@ export function SolarSimulation() {
 
   return (
     <Card className="flex flex-col h-full overflow-hidden border-border-emphasis bg-[#01050A]" p={0}>
-      <div className="px-4 py-3 flex justify-between items-center bg-panel-gradient border-b border-border-subtle shrink-0 relative z-10">
-        <div className="flex items-center gap-3">
-          <Layers className="w-4 h-4 text-accent-orange" />
-          <h3 className="font-header text-[13px] tracking-[0.2em] font-bold text-text-primary uppercase">
+      <div className="px-3 py-2 flex justify-between items-center bg-panel-gradient border-b border-border-subtle shrink-0 relative z-10">
+        <div className="flex items-center gap-2">
+          <Layers className="w-3.5 h-3.5 text-accent-orange" />
+          <h3 className="font-header text-[11px] tracking-[0.15em] font-bold text-text-primary uppercase">
             SOLAR DISK OBSERVATION (3D)
           </h3>
         </div>
         
         {/* Optical Filters Toggle */}
-        <div className="flex bg-[#020B18] border border-border-subtle rounded px-1 py-1 gap-1">
+        <div className="flex bg-[#020B18] border border-border-subtle rounded px-1 py-0.5 gap-0.5">
           {['AIA', 'HEL1OS', 'SoLEXS'].map(mode => (
             <button
               key={mode}
               onClick={() => setFilterMode(mode)}
-              className={`font-mono text-[10px] px-3 py-1 rounded transition-colors uppercase ${
+              className={`font-mono text-[9px] px-2 py-0.5 rounded transition-colors uppercase ${
                 filterMode === mode 
                   ? 'bg-accent-orange/20 text-accent-orange border border-accent-orange/30' 
                   : 'text-text-secondary hover:text-text-primary hover:bg-[#071E3D]'
@@ -615,7 +615,7 @@ export function SolarSimulation() {
         </div>
       </div>
 
-      <div ref={containerRef} className="flex-1 w-full relative min-h-[300px]">
+      <div ref={containerRef} className="flex-1 w-full relative overflow-hidden" style={{ minHeight: '200px' }}>
         <canvas ref={canvasRef} className="absolute inset-0 w-full h-full block z-0" />
         <SolarParticles trigger={activeAlert !== null} />
         
@@ -623,7 +623,7 @@ export function SolarSimulation() {
         <ActiveRegionLabelsOverlay containerRef={containerRef} filterMode={filterMode} />
       </div>
 
-      <div className={`px-4 py-2 border-t border-border-subtle shrink-0 font-telemetry text-[12px] tracking-wider uppercase transition-colors ${
+      <div className={`px-3 py-1.5 border-t border-border-subtle shrink-0 font-telemetry text-[10px] tracking-wider uppercase transition-colors ${
         demoActive ? 'bg-alert-gradient text-accent-red border-t-accent-red/50' : 'bg-panel-gradient text-accent-amber'
       }`}>
         {demoActive ? (

@@ -5,7 +5,7 @@ export function Card({ className, children, withScanLine = false, title, headerR
   return (
     <div
       className={cn(
-        "relative overflow-hidden flex flex-col animate-card-entry",
+        "relative overflow-hidden flex flex-col animate-card-entry min-h-0",
         className
       )}
       style={{
@@ -21,20 +21,20 @@ export function Card({ className, children, withScanLine = false, title, headerR
       )}
       {title && (
         <div 
-          className="px-5 py-3 flex items-center justify-between"
+          className="px-4 py-2.5 flex items-center justify-between shrink-0"
           style={{ borderBottom: '1px solid rgba(255,107,0,0.12)' }}
         >
-          <h3 className="font-mono text-[10px] tracking-[0.1em] text-[#8FA3C0] uppercase font-bold">
+          <h3 className="font-mono text-[10px] tracking-[0.1em] text-[#8FA3C0] uppercase font-bold truncate">
             {title}
           </h3>
           {headerRight && (
-            <div className="flex items-center">
+            <div className="flex items-center shrink-0">
               {headerRight}
             </div>
           )}
         </div>
       )}
-      <div className={cn("flex-1 flex flex-col min-h-0", props.noPadding ? "" : "px-5 py-4")}>
+      <div className={cn("flex-1 flex flex-col min-h-0 overflow-hidden", props.noPadding ? "" : "px-4 py-3")}>
         {children}
       </div>
     </div>
