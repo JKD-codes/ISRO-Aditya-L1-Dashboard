@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, History, Activity, Info, TrendingUp, BrainCircuit, Bell } from 'lucide-react';
+import { LayoutDashboard, History, Activity, Info, TrendingUp, BrainCircuit, Bell, Shield } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import useMLStore from '../../store/useMLStore';
 import { useStore } from '../../store/useStore';
@@ -12,6 +12,7 @@ export function Sidebar({ isOpen, setIsOpen }) {
   const navItems = [
     { name: 'Dashboard', path: '/', icon: LayoutDashboard },
     { name: 'ML Forecast', path: '/forecast', icon: TrendingUp },
+    { name: 'Nowcasting', path: '/nowcast', icon: Shield },
     { name: 'Model Explorer', path: '/model', icon: BrainCircuit },
     { name: 'Alert History', path: '/alerts', icon: Bell },
     { name: 'Historical Analysis', path: '/history', icon: History },
@@ -31,13 +32,13 @@ export function Sidebar({ isOpen, setIsOpen }) {
 
       {/* Sidebar */}
       <aside className={cn(
-        "fixed md:static inset-y-0 left-0 z-50 w-60 bg-background-secondary border-r-[1px] border-[rgba(255,107,0,0.15)] bg-grid-texture flex flex-col transition-transform duration-300 ease-in-out shrink-0",
+        "fixed md:static inset-y-0 left-0 z-50 w-48 lg:w-52 bg-background-secondary border-r-[1px] border-[rgba(255,107,0,0.15)] bg-grid-texture flex flex-col transition-transform duration-300 ease-in-out shrink-0",
         isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
       )}>
         
         {/* Mission Patch area */}
-        <div className="h-48 flex items-center justify-center border-b-[1px] border-[rgba(255,107,0,0.15)] shrink-0">
-          <svg width="120" height="120" viewBox="0 0 120 120" className="drop-shadow-lg">
+        <div className="h-32 lg:h-36 flex items-center justify-center border-b-[1px] border-[rgba(255,107,0,0.15)] shrink-0">
+          <svg width="90" height="90" viewBox="0 0 120 120" className="drop-shadow-lg">
             {/* Outer Ring */}
             <circle cx="60" cy="60" r="56" fill="none" stroke="#FF6B00" strokeWidth="2" />
             <circle cx="60" cy="60" r="50" fill="#020B18" stroke="#FFB347" strokeWidth="0.5" strokeDasharray="2 4" />
@@ -67,21 +68,21 @@ export function Sidebar({ isOpen, setIsOpen }) {
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 py-6 flex flex-col gap-2 px-3">
+        <nav className="flex-1 py-4 flex flex-col gap-1 px-2 overflow-y-auto">
           {navItems.map((item) => (
             <NavLink
               key={item.name}
               to={item.path}
               className={({ isActive }) => cn(
-                "flex items-center gap-3 px-4 py-3 rounded-sm transition-colors group",
+                "flex items-center gap-2 px-3 py-2 rounded-sm transition-colors group",
                 isActive 
                   ? "bg-background-tertiary border-l-[3px] border-accent-orange text-text-primary" 
                   : "text-text-secondary hover:bg-background-tertiary/50 border-l-[3px] border-transparent hover:text-text-primary"
               )}
               onClick={() => setIsOpen(false)}
             >
-              <item.icon className="w-4 h-4 opacity-70 group-hover:opacity-100 group-hover:text-accent-orange transition-colors" />
-              <span className="font-display text-sm tracking-wide flex-1">{item.name}</span>
+              <item.icon className="w-3.5 h-3.5 opacity-70 group-hover:opacity-100 group-hover:text-accent-orange transition-colors shrink-0" />
+              <span className="font-display text-xs tracking-wide flex-1 truncate">{item.name}</span>
               {item.name === 'ML Forecast' && t30Class && (
                 <span className={cn(
                   "font-mono text-[9px] px-1.5 py-0.5 rounded-sm border font-bold",

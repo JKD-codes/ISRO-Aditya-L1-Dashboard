@@ -18,7 +18,7 @@ import { useLocation } from 'react-router-dom';
 import gsap from '../animations/gsap.config';
 
 export function Dashboard() {
-  const { setSimulationMode, triggerDemoMode, demoActive, presentationMode } = useStore();
+  const { setSimulationMode, triggerDemoMode, demoActive, presentationMode, forecastMode } = useStore();
   const location = useLocation();
   const dPresses = useRef([]);
   const dashboardRef = useRef(null);
@@ -79,7 +79,7 @@ export function Dashboard() {
   }, [triggerDemoMode]);
 
   return (
-    <div ref={dashboardRef} className="h-auto xl:h-[calc(100vh-64px)] flex flex-col overflow-y-auto xl:overflow-hidden bg-transparent relative">
+    <div ref={dashboardRef} className="h-full flex flex-col overflow-y-auto bg-transparent relative">
       <AlertBanner />
       
       {presentationMode && (
@@ -88,75 +88,74 @@ export function Dashboard() {
         </div>
       )}
 
-      {/* Dynamic Asymmetric Grid Layout */}
-      <div className="flex-1 w-full p-2 xl:p-4 overflow-y-auto custom-scrollbar relative z-10">
-        <div className="grid grid-cols-1 md:grid-cols-6 xl:grid-cols-12 gap-2 xl:gap-3 auto-rows-min">
+      {/* Responsive Dashboard Grid */}
+      <div className="flex-1 w-full p-2 lg:p-3 xl:p-4 overflow-y-auto custom-scrollbar relative z-10">
+        <div className="grid grid-cols-1 md:grid-cols-6 lg:grid-cols-12 gap-2 lg:gap-2.5 xl:gap-3 auto-rows-min">
           
           {!presentationMode ? (
             <>
-              {/* Row 1-4: Solar Simulation (Huge Left Focus) */}
-              <div className="md:col-span-6 xl:col-span-7 xl:row-span-4 dashboard-card flex flex-col min-h-[380px] xl:min-h-[500px]">
+              {/* ─── ROW 1: Solar Sim (left) + Detector + Payload Status (right) ─── */}
+              <div className="md:col-span-6 lg:col-span-5 dashboard-card" style={{ minHeight: 'clamp(320px, 40vw, 500px)' }}>
                 <SolarSimulation />
               </div>
 
-              {/* Row 1: Top Right Metrics */}
-              <div className="md:col-span-2 xl:col-span-2 xl:row-span-1 dashboard-card min-h-[110px] xl:min-h-[130px]">
+              <div className="md:col-span-3 lg:col-span-4 dashboard-card" style={{ minHeight: 'clamp(220px, 22vw, 320px)' }}>
                 <FlareProbabilityGauge />
               </div>
-              <div className="md:col-span-4 xl:col-span-3 xl:row-span-1 dashboard-card min-h-[110px] xl:min-h-[130px]">
+              <div className="md:col-span-3 lg:col-span-3 dashboard-card" style={{ minHeight: 'clamp(220px, 22vw, 320px)' }}>
                 <PayloadStatus />
               </div>
 
-              {/* Row 2-3: Live Flux Chart (Right Middle) */}
-              <div className="md:col-span-6 xl:col-span-5 xl:row-span-2 dashboard-card min-h-[240px] xl:min-h-[280px]">
-                <LiveFluxChart />
+              {/* ─── ROW 2: Live GOES Flux (right side spans full width below solar) ─── */}
+              <div className="md:col-span-6 lg:col-span-7 dashboard-card" style={{ minHeight: 'clamp(200px, 20vw, 280px)' }}>
+                <LiveFluxChart showForecast={forecastMode === 'forecast'} />
               </div>
 
-              {/* Row 4: Prediction Engine (Right Bottom) */}
-              <div className="md:col-span-6 xl:col-span-5 xl:row-span-1 dashboard-card min-h-[100px] xl:min-h-[110px]">
+              {/* Prediction Engine Status */}
+              <div className="md:col-span-6 lg:col-span-5 dashboard-card" style={{ minHeight: 'clamp(90px, 10vw, 130px)' }}>
                 <PredictionEngineStatus />
               </div>
 
-              {/* Row 5-6: Dual Payload (Left Bottom) & Active Regions (Right Bottom) */}
-              <div className="md:col-span-6 xl:col-span-7 xl:row-span-2 dashboard-card min-h-[280px] xl:min-h-[320px]">
+              {/* ─── ROW 3: Dual Payload + Active Regions ─── */}
+              <div className="md:col-span-6 lg:col-span-7 dashboard-card" style={{ minHeight: 'clamp(220px, 22vw, 300px)' }}>
                 <DualPayloadChart />
               </div>
-              <div className="md:col-span-6 xl:col-span-5 xl:row-span-2 dashboard-card min-h-[280px] xl:min-h-[320px]">
+              <div className="md:col-span-6 lg:col-span-5 dashboard-card" style={{ minHeight: 'clamp(220px, 22vw, 300px)' }}>
                 <ActiveRegionTable />
               </div>
 
-              {/* Row 7: Bottom Metric Row */}
-              <div className="md:col-span-2 xl:col-span-3 xl:row-span-1 dashboard-card min-h-[140px]">
+              {/* ─── ROW 4: Bottom Metric Row ─── */}
+              <div className="md:col-span-3 lg:col-span-3 dashboard-card" style={{ minHeight: '130px' }}>
                 <SolarWindMonitor />
               </div>
-              <div className="md:col-span-2 xl:col-span-3 xl:row-span-1 dashboard-card min-h-[140px]">
+              <div className="md:col-span-3 lg:col-span-3 dashboard-card" style={{ minHeight: '130px' }}>
                 <SpaceWeatherImpactPanel />
               </div>
-              <div className="md:col-span-2 xl:col-span-3 xl:row-span-1 dashboard-card min-h-[140px]">
+              <div className="md:col-span-3 lg:col-span-3 dashboard-card" style={{ minHeight: '130px' }}>
                 <AlgorithmConfidenceFactors />
               </div>
-              <div className="md:col-span-6 xl:col-span-3 xl:row-span-1 dashboard-card min-h-[140px]">
+              <div className="md:col-span-3 lg:col-span-3 dashboard-card" style={{ minHeight: '130px' }}>
                 <SpectralHardnessChart />
               </div>
 
-              {/* Row 8: Split Width Insight & Raw Output */}
-              <div className="md:col-span-4 xl:col-span-8 xl:row-span-1 dashboard-card min-h-[140px]">
+              {/* ─── ROW 5: Insight + Raw Output ─── */}
+              <div className="md:col-span-4 lg:col-span-8 dashboard-card" style={{ minHeight: '130px' }}>
                 <GroqInsightPanel />
               </div>
-              <div className="md:col-span-2 xl:col-span-4 xl:row-span-1 dashboard-card min-h-[140px]">
+              <div className="md:col-span-2 lg:col-span-4 dashboard-card" style={{ minHeight: '130px' }}>
                 <PipelineOutputRaw />
               </div>
             </>
           ) : (
             <>
               {/* Presentation Mode Layout */}
-              <div className="md:col-span-6 xl:col-span-12 xl:row-span-2 dashboard-card min-h-[400px]">
-                <LiveFluxChart />
+              <div className="md:col-span-6 lg:col-span-12 dashboard-card min-h-[400px]">
+                <LiveFluxChart showForecast={forecastMode === 'forecast'} />
               </div>
-              <div className="md:col-span-6 xl:col-span-12 xl:row-span-2 dashboard-card min-h-[400px]">
+              <div className="md:col-span-6 lg:col-span-12 dashboard-card min-h-[400px]">
                 <DualPayloadChart />
               </div>
-              <div className="md:col-span-6 xl:col-span-12 xl:row-span-1 dashboard-card min-h-[150px]">
+              <div className="md:col-span-6 lg:col-span-12 dashboard-card min-h-[150px]">
                 <PredictionEngineStatus />
               </div>
             </>

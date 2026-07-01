@@ -1,167 +1,163 @@
 import json
-import numpy as np
+import sys
+import logging
+import zipfile
+import gzip
 from pathlib import Path
-from astropy.io import fits
-from astropy.time import Time
+from datetime import datetime, timezone
+
+try:
+    import numpy as np
+    from astropy.io import fits
+    from astropy.time import Time
+    ASTROPY_AVAILABLE = True
+except ImportError:
+    ASTROPY_AVAILABLE = False
+
+if not ASTROPY_AVAILABLE:
+    print("=" * 60)
+    print("ERROR: astropy and/or numpy not installed.")
+    print("Install with:  pip install astropy numpy")
+    print("=" * 60)
+    sys.exit(1)
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(message)s",
+    datefmt="%H:%M:%S",
+)
+logger = logging.getLogger("parse_fits")
 
 FITS_DIR = Path(__file__).parent / "fits"
+EXTRACTED_DIR = FITS_DIR / "extracted"
 OUTPUT_DIR = Path(__file__).parent / "processed"
 OUTPUT_DIR.mkdir(exist_ok=True)
-FITS_DIR.mkdir(exist_ok=True) # Ensure fits directory exists
+FITS_DIR.mkdir(exist_ok=True)
+EXTRACTED_DIR.mkdir(exist_ok=True)
 
-def parse_solexs(filepath: Path) -> dict:
-    """
-    Parse SoLEXS Level-1 FITS file.
-    SoLEXS stores time-series X-ray counts in a binary table extension.
-    Columns vary by file version — inspect with fits.info() first.
-    """
-    with fits.open(filepath) as hdul:
-        # Print structure so developer can identify correct extension
-        hdul.info()
-        
-        # SoLEXS Level-1 structure (typical):
-        # Extension 0: PRIMARY (header only)
-        # Extension 1: RATE or LIGHTCURVE (binary table)
-        #   Columns: TIME, RATE, ERROR, QUALITY
-        
-        # Try extension 1 first, fall back to 2
-        ext = 1
+def _extract_zips():
+    zip_files = list(FITS_DIR.glob("*.zip"))
+    for zf in zip_files:
         try:
-            data = hdul[ext].data
-        except Exception:
-            ext = 2
-            data = hdul[ext].data
+            logger.info(f"Extracting {zf.name}...")
+            with zipfile.ZipFile(zf, 'r') as zip_ref:
+                zip_ref.extractall(EXTRACTED_DIR)
+        except Exception as e:
+            logger.error(f"Failed to extract {zf.name}: {e}")
+
+def parse_solexs() -> dict:
+    # Find SDD2 lc.gz
+    lc_files = list(EXTRACTED_DIR.rglob("*/SDD2/*_L1.lc.gz")) + list(FITS_DIR.rglob("*/SDD2/*_L1.lc.gz"))
+    if not lc_files:
+        raise ValueError("No SDD2 .lc.gz file found for SoLEXS")
+    
+    filepath = lc_files[0]
+    logger.info(f"Parsing SoLEXS: {filepath.name}")
+    
+    with fits.open(filepath) as hdul:
+        data = hdul[1].data
+        times = data['TIME']
+        counts = data['COUNTS']
         
-        header = hdul[ext].header
-        
-        # Extract time column — SoLEXS uses MET (Mission Elapsed Time)
-        # Convert to UTC using MJDREFI + MJDREFF from header
-        time_col = data['TIME']
-        
-        mjdref = header.get('MJDREFI', 0) + header.get('MJDREFF', 0)
-        times_mjd = mjdref + time_col / 86400.0
-        times_utc = Time(times_mjd, format='mjd', scale='utc')
-        timestamps = times_utc.iso.tolist()
-        
-        # Extract count rate — try multiple possible column names
-        rate = None
-        for col_name in ['RATE', 'COUNTS', 'FLUX', 'SXR_RATE']:
-            if col_name in data.names:
-                rate = data[col_name].tolist()
-                break
-        
-        if rate is None:
-            raise ValueError(f"No rate column found. Available: {data.names}")
-        
-        # Energy channel info from header
-        e_min = header.get('E_MIN', 2.0)   # keV
-        e_max = header.get('E_MAX', 22.0)  # keV
-        
+        timestamps = []
+        flux = []
+        for t, c in zip(times, counts):
+            if not np.isnan(c) and c >= 0:
+                # Unix epoch directly to UTC datetime
+                dt = datetime.fromtimestamp(t, tz=timezone.utc)
+                timestamps.append(dt.strftime('%Y-%m-%dT%H:%M:%S.000Z'))
+                flux.append(float(c))
+                
+        logger.info(f"  ✓ SoLEXS parsed: {len(timestamps)} data points")
         return {
             "instrument": "SoLEXS",
-            "energy_range_kev": [e_min, e_max],
+            "energy_range_kev": [2.0, 22.0],
             "observation_date": "2024-05-10",
             "event": "X2.2 Gannon Storm",
-            "units": "counts/second",
+            "units": "counts",
             "timestamps": timestamps,
-            "flux": [float(r) if r is not None and not np.isnan(r) else None for r in rate],
+            "flux": flux,
             "source_file": filepath.name,
             "is_real_data": True
         }
 
-
-def parse_helios(filepath: Path) -> dict:
-    """
-    Parse HEL1OS Level-1 FITS file.
-    HEL1OS operates in event mode — individual photon events.
-    Must be binned into a light curve first.
-    """
-    with fits.open(filepath) as hdul:
-        hdul.info()
+def parse_helios() -> dict:
+    czt1_files = list(EXTRACTED_DIR.rglob("*/czt/lightcurve_czt1.fits")) + list(FITS_DIR.rglob("*/czt/lightcurve_czt1.fits"))
+    czt2_files = list(EXTRACTED_DIR.rglob("*/czt/lightcurve_czt2.fits")) + list(FITS_DIR.rglob("*/czt/lightcurve_czt2.fits"))
+    cdte1_files = list(EXTRACTED_DIR.rglob("*/cdte/lightcurve_cdte1.fits")) + list(FITS_DIR.rglob("*/cdte/lightcurve_cdte1.fits"))
+    cdte2_files = list(EXTRACTED_DIR.rglob("*/cdte/lightcurve_cdte2.fits")) + list(FITS_DIR.rglob("*/cdte/lightcurve_cdte2.fits"))
+    
+    all_files = czt1_files + czt2_files + cdte1_files + cdte2_files
+    if not all_files:
+        raise ValueError("No HEL1OS lightcurve FITS files found")
         
-        # HEL1OS Level-1 structure (typical):
-        # Extension 0: PRIMARY
-        # Extension 1: EVENTS (binary table)
-        #   Columns: TIME, ENERGY, GRADE, PI
-        # OR already binned:
-        # Extension 1: RATE with TIME, RATE columns
+    flux_map = {}
+    for f in all_files:
+        logger.info(f"Parsing HEL1OS: {f.name}")
+        with fits.open(f) as hdul:
+            data = hdul[-1].data # Last extension has the broadband total
+            isot = data['ISOT']
+            ctr = data['CTR']
+            for t, c in zip(isot, ctr):
+                if not np.isnan(c) and c >= 0:
+                    if t not in flux_map:
+                        flux_map[t] = []
+                    flux_map[t].append(float(c))
+                    
+    sorted_times = sorted(flux_map.keys())
+    timestamps = []
+    flux = []
+    for t in sorted_times:
+        # Sum counts across detectors for better signal
+        total_flux = sum(flux_map[t])
+        # Format isot to ensure standard ISO string
+        t_clean = t.strip() if isinstance(t, str) else str(t).strip()
+        if not t_clean.endswith('Z'):
+            t_clean += 'Z'
+        timestamps.append(t_clean)
+        flux.append(total_flux)
         
-        ext_data = hdul[1].data
-        col_names = ext_data.names
-        
-        header = hdul[1].header
-        mjdref = header.get('MJDREFI', 0) + header.get('MJDREFF', 0)
-        
-        if 'ENERGY' in col_names or 'PI' in col_names:
-            # Event mode — bin into 10-second light curve
-            event_times = ext_data['TIME']
-            
-            t_start = event_times.min()
-            t_end = event_times.max()
-            bin_size = 10.0  # seconds
-            
-            bins = np.arange(t_start, t_end + bin_size, bin_size)
-            counts, edges = np.histogram(event_times, bins=bins)
-            bin_centers = (edges[:-1] + edges[1:]) / 2
-            count_rates = counts / bin_size  # counts/sec
-            
-            times_mjd = mjdref + bin_centers / 86400.0
-            times_utc = Time(times_mjd, format='mjd', scale='utc')
-            timestamps = times_utc.iso.tolist()
-            flux = count_rates.tolist()
-            
-        else:
-            # Pre-binned light curve
-            time_col = ext_data['TIME']
-            times_mjd = mjdref + time_col / 86400.0
-            times_utc = Time(times_mjd, format='mjd', scale='utc')
-            timestamps = times_utc.iso.tolist()
-            
-            for col in ['RATE', 'COUNTS', 'HXR_RATE']:
-                if col in col_names:
-                    flux = ext_data[col].tolist()
-                    break
-        
-        return {
-            "instrument": "HEL1OS",
-            "energy_range_kev": [10, 150],
-            "observation_date": "2024-05-10",
-            "event": "X2.2 Gannon Storm",
-            "units": "counts/second",
-            "timestamps": timestamps,
-            "flux": [float(r) for r in flux],
-            "source_file": filepath.name,
-            "is_real_data": True
-        }
-
+    logger.info(f"  ✓ HEL1OS parsed: {len(timestamps)} data points")
+    return {
+        "instrument": "HEL1OS",
+        "energy_range_kev": [10.0, 150.0],
+        "observation_date": "2024-05-10",
+        "event": "X2.2 Gannon Storm",
+        "units": "counts/second",
+        "timestamps": timestamps,
+        "flux": flux,
+        "source_file": "Multiple",
+        "is_real_data": True
+    }
 
 def main():
-    fits_files = list(FITS_DIR.glob("*.fits"))
-    
-    if not fits_files:
-        print("ERROR: No FITS files found in backend/data/fits/")
-        print("Follow the instructions in backend/data/README.md")
+    _extract_zips()
+
+    if '--inspect' in sys.argv:
+        # Just simple inspect mode
+        for fp in list(EXTRACTED_DIR.rglob("*.fits")) + list(EXTRACTED_DIR.rglob("*.lc.gz")):
+            print(f"\n{'=' * 60}\nFILE: {fp.name}\n{'=' * 60}")
+            with fits.open(fp) as hdul:
+                hdul.info()
         return
-    
-    solexs_files = [f for f in fits_files if 'solexs' in f.name.lower()]
-    helios_files = [f for f in fits_files if 'helios' in f.name.lower() or
-                                              'hel1os' in f.name.lower()]
-    
-    if solexs_files:
-        result = parse_solexs(solexs_files[0])
+
+    try:
+        solexs_data = parse_solexs()
         out = OUTPUT_DIR / "solexs_20240510.json"
         with open(out, 'w') as f:
-            json.dump(result, f, indent=2)
-        print(f"SoLEXS: {len(result['timestamps'])} data points → {out}")
-    
-    if helios_files:
-        result = parse_helios(helios_files[0])
+            json.dump(solexs_data, f, indent=2)
+        logger.info(f"SoLEXS written to {out}")
+    except Exception as e:
+        logger.error(f"SoLEXS parsing FAILED: {e}")
+
+    try:
+        helios_data = parse_helios()
         out = OUTPUT_DIR / "helios_20240510.json"
         with open(out, 'w') as f:
-            json.dump(result, f, indent=2)
-        print(f"HEL1OS: {len(result['timestamps'])} data points → {out}")
-    
-    print("Done. Run the FastAPI backend — endpoints will serve real data.")
+            json.dump(helios_data, f, indent=2)
+        logger.info(f"HEL1OS written to {out}")
+    except Exception as e:
+        logger.error(f"HEL1OS parsing FAILED: {e}")
 
 if __name__ == "__main__":
     main()

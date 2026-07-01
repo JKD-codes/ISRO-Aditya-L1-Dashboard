@@ -9,6 +9,7 @@ import { About } from './pages/About';
 import ForecastPage from './pages/ForecastPage';
 import ModelExplainerPage from './pages/ModelExplainerPage';
 import AlertHistoryPage from './pages/AlertHistoryPage';
+import NowcastingPage from './pages/NowcastingPage';
 import { useStore } from './store/useStore';
 import useMLStore from './store/useMLStore';
 import { ToastManager } from './components/ui/ToastManager';
@@ -44,6 +45,7 @@ function App() {
             <Route path="forecast" element={<ForecastPage />} />
             <Route path="model" element={<ModelExplainerPage />} />
             <Route path="alerts" element={<AlertHistoryPage />} />
+            <Route path="nowcast" element={<NowcastingPage />} />
             <Route path="history" element={<HistoricalAnalysis />} />
             <Route path="payloads" element={<PayloadHealth />} />
             <Route path="about" element={<About />} />

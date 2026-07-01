@@ -69,23 +69,44 @@ export function LiveFluxChart({ showForecast = false }) {
 
   const combinedData = useMemo(() => {
     const base = [...parsedData];
-    if (showForecast && base.length > 0) {
-      const lastPoint = base[base.length - 1];
+    if (base.length === 0) return [];
+    
+    // First, map the base data to include log10 values for the linear scale
+    const mappedBase = base.map((b, i) => {
+      const mapped = {
+        ...b,
+        log_xrsb: b.xrsb ? Math.log10(b.xrsb) : null,
+        log_xrsa: b.xrsa ? Math.log10(b.xrsa) : null,
+        forecastXrsb: null,
+        forecastLow: null,
+        forecastHigh: null,
+        log_forecastXrsb: null,
+        log_forecastLow: null,
+        log_forecastHigh: null
+      };
+      return mapped;
+    });
+
+    if (showForecast) {
+      const lastPoint = mappedBase[mappedBase.length - 1];
       
       // Mutate lastPoint to connect the lines
       lastPoint.forecastXrsb = lastPoint.xrsb;
-      lastPoint.forecastRange = [lastPoint.xrsb, lastPoint.xrsb];
+      lastPoint.forecastLow = lastPoint.xrsb;
+      lastPoint.forecastHigh = lastPoint.xrsb;
+      lastPoint.log_forecastXrsb = lastPoint.log_xrsb;
+      lastPoint.log_forecastLow = lastPoint.log_xrsb;
+      lastPoint.log_forecastHigh = lastPoint.log_xrsb;
 
       // Use real trajectory if available, otherwise generate a realistic mock fallback
       let trajectoryData = mlForecast?.flux_trajectory;
       
-      if (!trajectoryData) {
+      if (!trajectoryData || trajectoryData.length === 0) {
         // Generate 60 minutes of mock forecast trajectory
         trajectoryData = [];
         let currentF = lastPoint.xrsb;
         const baseTime = lastPoint.time;
         for (let i = 1; i <= 60; i++) {
-          // Add a slight decay or random walk to simulate XGBoost output
           currentF = currentF * (0.95 + Math.random() * 0.1); 
           trajectoryData.push({
             time_tag: new Date(baseTime + i * 60000).toISOString(),
@@ -101,35 +122,28 @@ export function LiveFluxChart({ showForecast = false }) {
          return {
            time: new Date(d.time_tag).getTime(),
            time_tag: d.time_tag,
+           xrsb: null,
+           xrsa: null,
+           log_xrsb: null,
+           log_xrsa: null,
            forecastXrsb: f,
-           forecastRange: [low, high]
+           forecastLow: low,
+           forecastHigh: high,
+           log_forecastXrsb: Math.log10(f),
+           log_forecastLow: Math.log10(low),
+           log_forecastHigh: Math.log10(high)
          };
       });
-      return [...base, ...traj].sort((a, b) => a.time - b.time);
+      return [...mappedBase, ...traj].sort((a, b) => a.time - b.time);
     }
-    return base;
+    
+    return mappedBase;
   }, [parsedData, showForecast, mlForecast]);
 
   const chartRef = useRef(null);
   
   useEffect(() => {
-    if (showForecast && chartRef.current && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      // Find the forecast line path
-      const paths = chartRef.current.querySelectorAll('.forecast-line path.recharts-curve.recharts-line-curve');
-      paths.forEach(path => {
-        const length = path.getTotalLength();
-        // Since we want it dashed (5 5), animating dashoffset normally erases the dash pattern.
-        // We'll animate opacity as a fallback or just use a clipPath in real SVG. 
-        // For GSAP stroke reveal of a dashed line, we can wrap it in a custom animation:
-        gsap.fromTo(path,
-          { strokeDasharray: `${length} ${length}`, strokeDashoffset: length },
-          { strokeDashoffset: 0, duration: 1.5, ease: 'power2.out', onComplete: () => {
-            // Restore dash pattern
-            path.setAttribute('stroke-dasharray', '5 5');
-          }}
-        );
-      });
-    }
+    // Disabled GSAP animation to prevent path length errors
   }, [combinedData, showForecast]);
 
   const getFlareClass = (flux) => {
@@ -216,8 +230,8 @@ export function LiveFluxChart({ showForecast = false }) {
           </div>
         ) : (
           <>
-            <div className="flex-1 min-h-0" ref={chartRef}>
-              <ResponsiveContainer width="100%" height="100%">
+            <div style={{ flex: '1 1 0%', minHeight: 320, width: '100%' }} ref={chartRef}>
+              <ResponsiveContainer width="100%" height={320}>
                 <ComposedChart data={combinedData} margin={{ top: 15, right: 45, left: -20, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,107,0,0.15)" />
                   <XAxis 
@@ -228,24 +242,23 @@ export function LiveFluxChart({ showForecast = false }) {
                     fontFamily="monospace"
                   />
                   <YAxis 
-                    scale="log"
-                    domain={[1e-9, 1e-3]}
-                    allowDataOverflow={true}
-                    ticks={[1e-9, 1e-8, 1e-7, 1e-6, 1e-5, 1e-4, 1e-3]}
-                    tickFormatter={(v) => { const exp = Math.round(Math.log10(v)); return `1e${exp}`; }}
+                    scale="linear"
+                    domain={[-9, -3]}
+                    ticks={[-9, -8, -7, -6, -5, -4, -3]}
+                    tickFormatter={(v) => `1e${v}`}
                     stroke="#8FA3C0"
                     fontSize={8}
                     fontFamily="monospace"
                   />
                   <Tooltip content={<CustomTooltip />} />
                   
-                  <ReferenceArea y1={1e-5} y2={1e-4} fill="rgba(255,107,0,0.06)" isFront={false} />
-                  <ReferenceArea y1={1e-4} y2={1e-3} fill="rgba(255,59,59,0.08)" isFront={false} />
+                  <ReferenceArea y1={-5} y2={-4} fill="rgba(255,107,0,0.06)" isFront={false} />
+                  <ReferenceArea y1={-4} y2={-3} fill="rgba(255,59,59,0.08)" isFront={false} />
 
-                  <ReferenceLine y={1e-7} stroke="#2E3D52" strokeDasharray="2 2" label={{ value: 'B', fill: '#8FA3C0', position: 'right', fontSize: 8, fontFamily: 'monospace' }} />
-                  <ReferenceLine y={1e-6} stroke="#4FC3F7" strokeDasharray="3 3" label={{ value: 'C', fill: '#4FC3F7', position: 'right', fontSize: 8, fontFamily: 'monospace' }} />
-                  <ReferenceLine y={1e-5} stroke="#FFB347" strokeDasharray="3 3" label={{ value: 'M', fill: '#FFB347', position: 'right', fontSize: 8, fontFamily: 'monospace' }} />
-                  <ReferenceLine y={1e-4} stroke="#FF3B3B" strokeDasharray="3 3" label={{ value: 'X', fill: '#FF3B3B', position: 'right', fontSize: 8, fontFamily: 'monospace' }} />
+                  <ReferenceLine y={-7} stroke="#2E3D52" strokeDasharray="2 2" label={{ value: 'B', fill: '#8FA3C0', position: 'right', fontSize: 8, fontFamily: 'monospace' }} />
+                  <ReferenceLine y={-6} stroke="#4FC3F7" strokeDasharray="3 3" label={{ value: 'C', fill: '#4FC3F7', position: 'right', fontSize: 8, fontFamily: 'monospace' }} />
+                  <ReferenceLine y={-5} stroke="#FFB347" strokeDasharray="3 3" label={{ value: 'M', fill: '#FFB347', position: 'right', fontSize: 8, fontFamily: 'monospace' }} />
+                  <ReferenceLine y={-4} stroke="#FF3B3B" strokeDasharray="3 3" label={{ value: 'X', fill: '#FF3B3B', position: 'right', fontSize: 8, fontFamily: 'monospace' }} />
 
                   {showForecast && parsedData.length > 0 && (
                     <ReferenceLine 
@@ -257,14 +270,17 @@ export function LiveFluxChart({ showForecast = false }) {
                   )}
 
                   {showForecast && (
-                    <Area type="monotone" dataKey="forecastRange" stroke="none" fill="rgba(255,179,71,0.15)" isAnimationActive={false} />
+                    <>
+                      <Line className="forecast-line" type="monotone" dataKey="log_forecastLow" stroke="rgba(255,179,71,0.2)" strokeWidth={1} strokeDasharray="3 3" dot={false} isAnimationActive={false} connectNulls={true} />
+                      <Line className="forecast-line" type="monotone" dataKey="log_forecastHigh" stroke="rgba(255,179,71,0.2)" strokeWidth={1} strokeDasharray="3 3" dot={false} isAnimationActive={false} connectNulls={true} />
+                    </>
                   )}
 
-                  <Line type="monotone" dataKey="xrsb" stroke="#FFB347" strokeWidth={1.5} dot={false} activeDot={{ r: 4 }} isAnimationActive={false} />
-                  <Line type="monotone" dataKey="xrsa" stroke="#4FC3F7" strokeWidth={1} dot={false} activeDot={{ r: 3 }} isAnimationActive={false} />
+                  <Line type="monotone" dataKey="log_xrsb" stroke="#FFB347" strokeWidth={1.5} dot={false} activeDot={{ r: 4 }} isAnimationActive={false} connectNulls={true} />
+                  <Line type="monotone" dataKey="log_xrsa" stroke="#4FC3F7" strokeWidth={1} dot={false} activeDot={{ r: 3 }} isAnimationActive={false} connectNulls={true} />
                   
                   {showForecast && (
-                    <Line className="forecast-line" type="monotone" dataKey="forecastXrsb" stroke="#FFB347" strokeDasharray="5 5" strokeWidth={1.5} dot={false} isAnimationActive={false} />
+                    <Line className="forecast-line" type="monotone" dataKey="log_forecastXrsb" stroke="#FFB347" strokeDasharray="5 5" strokeWidth={1.5} dot={false} isAnimationActive={false} connectNulls={true} />
                   )}
                 </ComposedChart>
               </ResponsiveContainer>

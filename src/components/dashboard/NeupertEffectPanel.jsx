@@ -11,6 +11,13 @@ export function NeupertEffectPanel() {
   const neupertResult = useMLStore(state => state.neupertResult) || { confirmed: false, lead_mins: 0, correlation: 0 };
   const wrapperRef = useRef(null);
 
+  // Determine data source from live data
+  const isRealData = useMemo(() => {
+    if (solexsLive.length > 0 && solexsLive[0]?.is_real_data) return true;
+    if (solexsLive.length > 0 && solexsLive[0]?._data_source === 'real_pradan') return true;
+    return false;
+  }, [solexsLive]);
+
   useEffect(() => {
     if (neupertResult.confirmed && wrapperRef.current) {
       // GSAP Highlight Animation on confirmation
@@ -146,11 +153,22 @@ export function NeupertEffectPanel() {
           </div>
 
           <div className="mt-auto bg-[#0A1929] p-3 rounded border border-border-subtle/50">
-            <p className="font-mono text-[10px] text-text-secondary leading-relaxed">
-              {neupertResult.confirmed 
-                ? `HEL1OS hard X-rays peaked ${neupertResult.lead_mins} min before SoLEXS soft X-rays, confirming particle acceleration (Neupert Effect).`
-                : "Monitoring for empirical relationship where hard X-ray flux is proportional to the time derivative of soft X-ray flux."}
-            </p>
+            <div className="flex items-center justify-between gap-2 mb-1">
+              <p className="font-mono text-[10px] text-text-secondary leading-relaxed flex-1">
+                {neupertResult.confirmed 
+                  ? `HEL1OS hard X-rays peaked ${neupertResult.lead_mins} min before SoLEXS soft X-rays, confirming particle acceleration (Neupert Effect).`
+                  : "Monitoring for empirical relationship where hard X-ray flux is proportional to the time derivative of soft X-ray flux."}
+              </p>
+              {isRealData ? (
+                <span className="px-2 py-0.5 rounded border border-[#00E5A0] bg-[#00E5A0]/10 text-[#00E5A0] font-mono text-[8px] font-bold whitespace-nowrap shrink-0">
+                  REAL DATA (MAY 10, 2024)
+                </span>
+              ) : (
+                <span className="px-2 py-0.5 rounded border border-[#8FA3C0]/30 bg-[#8FA3C0]/5 text-[#8FA3C0] font-mono text-[8px] font-bold whitespace-nowrap shrink-0">
+                  SYNTHETIC DATA
+                </span>
+              )}
+            </div>
           </div>
         </div>
       </Card>

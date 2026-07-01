@@ -120,3 +120,65 @@
 .presentation-mode .font-mono { 
   font-size: 120%; 
 }
+
+/* ─── Dashboard Responsive Overrides ──────────────────────────────────────── */
+
+/* Every dashboard-card must contain its children */
+.dashboard-card {
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+.dashboard-card > * {
+  min-width: 0;
+  min-height: 0;
+}
+
+/* Prevent any card content from forcing horizontal scroll */
+.dashboard-card * {
+  max-width: 100%;
+}
+
+/* Custom scrollbar for dashboard */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255, 107, 0, 0.2);
+  border-radius: 2px;
+}
+
+/* ─── Mobile (< 768px) ─── */
+@media (max-width: 767px) {
+  body {
+    font-size: 0.85rem;
+  }
+  .dashboard-card {
+    min-height: auto !important;
+  }
+}
+
+/* ─── Tablet (768px – 1023px) ─── */
+@media (min-width: 768px) and (max-width: 1023px) {
+  body {
+    font-size: 0.88rem;
+  }
+}
+
+/* ─── Laptop (1024px – 1365px) ─── */
+@media (min-width: 1024px) and (max-width: 1365px) {
+  body {
+    font-size: 0.9rem;
+  }
+}
+
+/* ─── Desktop (1366px+) ─── */
+@media (min-width: 1366px) {
+  body {
+    font-size: 0.95rem;
+  }
+}

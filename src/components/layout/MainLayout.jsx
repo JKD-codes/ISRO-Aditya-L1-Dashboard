@@ -62,10 +62,10 @@ export function MainLayout() {
         </div>
 
         <main className={cn(
-          "flex-1 overflow-auto relative",
+          "flex-1 overflow-hidden relative min-h-0",
           presentationMode ? "pb-[80px]" : ""
         )}>
-          <div key={location.pathname} className="absolute inset-0 p-6 page-fade-in">
+          <div key={location.pathname} className="h-full overflow-y-auto page-fade-in">
             <Outlet />
           </div>
         </main>

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { DualPayloadChart } from '../components/dashboard/DualPayloadChart';
 import { Card } from '../components/ui/Card';
-import { gannonStormData } from '../data/gannonStorm';
+import { gannonStormData, fetchGannonStormData } from '../data/gannonStorm';
 import { useStore } from '../store/useStore';
 import { getGoesFlares } from '../services/api';
 import { format, parseISO, subHours } from 'date-fns';
@@ -13,6 +13,17 @@ import { SolarCycleContext } from '../components/dashboard/SolarCycleContext';
 export function HistoricalAnalysis() {
   const { activityLevel } = useStore();
   
+  // Gannon Storm data (async fetch with fallback)
+  const [stormData, setStormData] = useState(gannonStormData);
+  const [dataSource, setDataSource] = useState('loading');
+
+  useEffect(() => {
+    fetchGannonStormData().then(result => {
+      setStormData(result);
+      setDataSource(result.dataSource || 'synthetic_fallback');
+    });
+  }, []);
+
   // Flare Table States
   const [flares, setFlares] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -147,8 +158,9 @@ export function HistoricalAnalysis() {
       {/* Top section (60% height equivalent visual container) */}
       <div className="min-h-[480px] flex flex-col shrink-0">
         <DualPayloadChart 
-          data={gannonStormData} 
+          data={stormData} 
           title="ADITYA-L1 DUAL PAYLOAD ANALYSIS · GANNON STORM MAY 2024"
+          dataSource={dataSource}
         />
       </div>
 

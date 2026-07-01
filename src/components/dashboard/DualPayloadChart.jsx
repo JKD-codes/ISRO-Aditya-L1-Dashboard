@@ -4,7 +4,7 @@ import { Card } from '../ui/Card';
 import { useStore } from '../../store/useStore';
 import { useGSAPEntrance } from '../../hooks/useGSAPEntrance';
 
-export function DualPayloadChart({ title }) {
+export function DualPayloadChart({ title, dataSource }) {
   const { solexsData, heliosData, pipelineNowcast } = useStore();
   const neupertResult = pipelineNowcast?.detection;
   
@@ -82,7 +82,21 @@ export function DualPayloadChart({ title }) {
             {neupertResult?.neupert_confirmed && (
               <span className="text-[#FFB347]">NEUPERT EFFECT DETECTED</span>
             )}
-            {isReal ? (
+            {/* Badge logic: dataSource prop (from Gannon pages) takes priority,
+                then fall back to store's is_real_data for live streaming view */}
+            {dataSource === 'real_pradan' ? (
+              <span className="px-2 py-0.5 rounded border border-[#00E5A0] bg-[#00E5A0]/10 text-[#00E5A0] font-bold">
+                REAL ADITYA-L1 DATA (MAY 10, 2024)
+              </span>
+            ) : dataSource === 'synthetic_fallback' ? (
+              <span className="px-2 py-0.5 rounded border border-[#FFB347] bg-[#FFB347]/10 text-[#FFB347] font-bold">
+                SYNTHETIC FALLBACK
+              </span>
+            ) : dataSource === 'loading' ? (
+              <span className="px-2 py-0.5 rounded border border-border-subtle bg-background-tertiary text-text-secondary font-bold animate-pulse">
+                LOADING...
+              </span>
+            ) : isReal ? (
               <span className="px-2 py-0.5 rounded border border-[#00E5A0] bg-[#00E5A0]/10 text-[#00E5A0] font-bold">
                 REAL ADITYA-L1 DATA
               </span>
@@ -100,62 +114,64 @@ export function DualPayloadChart({ title }) {
               WAITING FOR TELEMETRY...
             </div>
           ) : (
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={chartData} margin={{ top: 20, right: 30, left: 10, bottom: 20 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,107,0,0.15)" />
-                <XAxis 
-                  dataKey="formattedTime" 
-                  stroke="#8FA3C0" 
-                  fontSize={9}
-                  minTickGap={30}
-                />
-                <YAxis 
-                  yAxisId="left"
-                  stroke="#FFB347" 
-                  fontSize={9}
-                  tickFormatter={(v) => v > 1000 ? `${(v/1000).toFixed(1)}k` : v.toFixed(0)}
-                />
-                <YAxis 
-                  yAxisId="right"
-                  orientation="right"
-                  scale="log"
-                  domain={[1e-9, 1e-3]}
-                  stroke="#4FC3F7" 
-                  fontSize={9}
-                  tickFormatter={(v) => v.toExponential(0)}
-                />
-                <Tooltip content={<CustomTooltip />} />
-                
-                {neupertPoint && (
-                  <ReferenceLine 
-                    x={neupertPoint} 
-                    stroke="#FFB347" 
-                    strokeDasharray="3 3" 
-                    yAxisId="left" 
-                    label={{ value: `NEUPERT T-${neupertResult.neupert_delay_minutes}m`, fill: '#FFB347', position: 'top', fontSize: 9 }} 
+            <div style={{ flex: '1 1 0%', minHeight: 320, width: '100%' }}>
+              <ResponsiveContainer width="100%" height={320}>
+                <LineChart data={chartData} margin={{ top: 20, right: 30, left: 10, bottom: 20 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,107,0,0.15)" />
+                  <XAxis 
+                    dataKey="formattedTime" 
+                    stroke="#8FA3C0" 
+                    fontSize={9}
+                    minTickGap={30}
                   />
-                )}
+                  <YAxis 
+                    yAxisId="left"
+                    stroke="#FFB347" 
+                    fontSize={9}
+                    tickFormatter={(v) => v > 1000 ? `${(v/1000).toFixed(1)}k` : v.toFixed(0)}
+                  />
+                  <YAxis 
+                    yAxisId="right"
+                    orientation="right"
+                    scale="log"
+                    domain={[1e-9, 1e-3]}
+                    stroke="#4FC3F7" 
+                    fontSize={9}
+                    tickFormatter={(v) => v.toExponential(0)}
+                  />
+                  <Tooltip content={<CustomTooltip />} />
+                  
+                  {neupertPoint && (
+                    <ReferenceLine 
+                      x={neupertPoint} 
+                      stroke="#FFB347" 
+                      strokeDasharray="3 3" 
+                      yAxisId="left" 
+                      label={{ value: `NEUPERT T-${neupertResult.neupert_delay_minutes}m`, fill: '#FFB347', position: 'top', fontSize: 9 }} 
+                    />
+                  )}
 
-                <Line 
-                  isAnimationActive={false}
-                  yAxisId="left"
-                  type="monotone" 
-                  dataKey="hardXray" 
-                  stroke="#FFB347" 
-                  strokeWidth={2}
-                  dot={false}
-                />
-                <Line 
-                  isAnimationActive={false}
-                  yAxisId="right"
-                  type="monotone" 
-                  dataKey="softXray" 
-                  stroke="#4FC3F7" 
-                  strokeWidth={2}
-                  dot={false}
-                />
-              </LineChart>
-            </ResponsiveContainer>
+                  <Line 
+                    isAnimationActive={false}
+                    yAxisId="left"
+                    type="monotone" 
+                    dataKey="hardXray" 
+                    stroke="#FFB347" 
+                    strokeWidth={2}
+                    dot={false}
+                  />
+                  <Line 
+                    isAnimationActive={false}
+                    yAxisId="right"
+                    type="monotone" 
+                    dataKey="softXray" 
+                    stroke="#4FC3F7" 
+                    strokeWidth={2}
+                    dot={false}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
           )}
         </div>
       </Card>

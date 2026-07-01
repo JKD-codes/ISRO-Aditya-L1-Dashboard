@@ -262,8 +262,8 @@ export const useStore = create((set, get) => ({
     const lastAlert = get().lastAlertTime;
 
     // Detection criteria:
-    const isAboveNoise = flux9 > 1e-7;
-    const isDoubled = fluxRatio > 2.5;
+    const isAboveNoise = flux9 > 5e-8; // Lowered from 1e-7 for B-class detection
+    const isDoubled = fluxRatio > 2.0;  // Lowered from 2.5 for better sensitivity
     const isRising = rateOfRise > 0;
 
     if (isAboveNoise && isDoubled && isRising) {
@@ -273,6 +273,7 @@ export const useStore = create((set, get) => ({
         if (flux9 >= 1e-4) classStr = 'X';
         else if (flux9 >= 1e-5) classStr = 'M';
         else if (flux9 >= 1e-6) classStr = 'C';
+        // B-class: 1e-7 to 1e-6 (now detectable with 5e-8 threshold)
 
         // Approximate peak class (e.g. C3.2)
         const subClass = (flux9 / Math.pow(10, Math.floor(Math.log10(flux9)))).toFixed(1);
