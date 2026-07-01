@@ -62,7 +62,7 @@ export function AlertHistoryLog({ filterClass = 'ALL' }) {
   };
 
   const filteredHistory = alertHistory.filter(alert => 
-    filterClass === 'ALL' || alert.flareClass.startsWith(filterClass)
+    filterClass === 'ALL' || (alert.flareClass && alert.flareClass.startsWith(filterClass))
   );
 
   return (
@@ -77,13 +77,13 @@ export function AlertHistoryLog({ filterClass = 'ALL' }) {
             <div key={alert.id || i} className="flex items-center justify-between bg-[#01050A] border border-border-subtle p-2 rounded-sm hover:border-white/20 transition-colors">
               <div className="flex items-center gap-3">
                 <span className="font-mono text-[10px] text-text-secondary">
-                  {alert.timestamp.substring(11, 19)} UTC
+                  {(alert.timestamp || alert.time || '').substring(11, 19)} UTC
                 </span>
-                <span className={`font-mono text-[10px] px-1.5 py-0.5 rounded-sm border font-bold ${getClassColor(alert.flareClass)}`}>
-                  {alert.flareClass}
+                <span className={`font-mono text-[10px] px-1.5 py-0.5 rounded-sm border font-bold ${getClassColor(alert.flareClass || '')}`}>
+                  {alert.flareClass || 'UNKNOWN'}
                 </span>
                 <span className="font-mono text-[10px] text-text-primary">
-                  AR{alert.region}
+                  {alert.region ? `AR${alert.region}` : ''}
                 </span>
               </div>
               

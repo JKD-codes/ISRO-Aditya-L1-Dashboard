@@ -23,10 +23,10 @@ export default function AlertHistoryPage() {
   const chartData = useMemo(() => {
     const counts = { B: 0, C: 0, M: 0, X: 0 };
     alertHistory.forEach(alert => {
-      if (alert.flareClass.startsWith('X')) counts.X++;
-      else if (alert.flareClass.startsWith('M')) counts.M++;
-      else if (alert.flareClass.startsWith('C')) counts.C++;
-      else if (alert.flareClass.startsWith('B')) counts.B++;
+      if (alert.flareClass?.startsWith('X')) counts.X++;
+      else if (alert.flareClass?.startsWith('M')) counts.M++;
+      else if (alert.flareClass?.startsWith('C')) counts.C++;
+      else if (alert.flareClass?.startsWith('B')) counts.B++;
     });
     return [
       { name: 'B-CLASS', count: counts.B, color: '#8FA3C0' },
