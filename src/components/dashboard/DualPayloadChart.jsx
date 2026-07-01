@@ -114,8 +114,8 @@ export function DualPayloadChart({ title, dataSource }) {
               WAITING FOR TELEMETRY...
             </div>
           ) : (
-            <div style={{ flex: '1 1 0%', minHeight: 0, width: '100%' }}>
-              <ResponsiveContainer width="100%" height="100%">
+            <div style={{ flex: '1 1 0%', minHeight: 320, width: '100%' }}>
+              <ResponsiveContainer width="100%" height={320}>
                 <LineChart data={chartData} margin={{ top: 20, right: 30, left: 10, bottom: 20 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,107,0,0.15)" />
                   <XAxis 

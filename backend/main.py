@@ -65,6 +65,16 @@ async def lifespan(app: FastAPI):
         logger.info("✅ Pre-trained model loaded.")
         pipeline._initialized = True
 
+    try:
+        detector = SolarFlareDetector()
+        pipeline_cache["nowcast"] = detector.run_nowcast()
+        detector2 = SolarFlareDetector()
+        pipeline_cache["forecast"] = detector2.run_forecast()
+        pipeline_cache["last_run"] = datetime.now(timezone.utc).isoformat()
+        logger.info("Pipeline executed on startup successfully.")
+    except Exception as e:
+        logger.error(f"Error executing pipeline on startup: {e}")
+
     # Start background pipeline processing
     task = asyncio.create_task(background_pipeline_loop())
 
@@ -89,18 +99,6 @@ app.add_middleware(
 cache = TTLCache(maxsize=100, ttl=55)
 
 pipeline_cache = {"nowcast": None, "forecast": None, "last_run": None}
-
-@app.on_event("startup")
-async def run_pipeline_on_startup():
-    try:
-        detector = SolarFlareDetector()
-        pipeline_cache["nowcast"] = detector.run_nowcast()
-        detector2 = SolarFlareDetector()
-        pipeline_cache["forecast"] = detector2.run_forecast()
-        pipeline_cache["last_run"] = datetime.now(timezone.utc).isoformat()
-        print("Pipeline executed on startup successfully.")
-    except Exception as e:
-        print(f"Error executing pipeline on startup: {e}")
 
 # WebSocket connections
 ws_clients: list[WebSocket] = []
@@ -505,12 +503,13 @@ async def get_ml_real_validation():
 # AI Insight Proxy (Groq)
 # ---------------------------------------------------------------------------
 from pydantic import BaseModel
+from typing import Optional, Dict, Any, Union
 
 class InsightRequest(BaseModel):
-    flux: float
-    forecastProbs: dict = {}
-    neupert: dict = {}
-    activeRegions: dict = {}
+    flux: Union[float, str]
+    forecastProbs: Optional[Dict[str, Any]] = {}
+    neupert: Optional[Dict[str, Any]] = {}
+    activeRegions: Optional[Dict[str, Any]] = {}
 
 @app.post("/api/ai/insight")
 async def get_ai_insight(req: InsightRequest):

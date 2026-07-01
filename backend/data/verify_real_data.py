@@ -21,9 +21,9 @@ from datetime import datetime
 
 PROCESSED_DIR = Path(__file__).parent / "processed"
 
-# Known Gannon Storm X2.2 GOES peak window (UTC)
-EXPECTED_PEAK_START = datetime(2024, 5, 10, 6, 50, 0)
-EXPECTED_PEAK_END   = datetime(2024, 5, 10, 7, 0, 0)
+# Known Gannon Storm X2.2 SoLEXS peak (UTC)
+EXPECTED_PEAK_TIME = datetime(2024, 5, 10, 6, 50, 45)
+EXPECTED_PEAK_FLUX = 19937
 
 
 def verify_file(filepath: Path, instrument: str) -> list:
@@ -115,20 +115,21 @@ def verify_file(filepath: Path, instrument: str) -> list:
                 peak_ts_clean = peak_ts_clean.replace(' ', 'T')
                 peak_ts = datetime.fromisoformat(peak_ts_clean)
 
-                in_window = EXPECTED_PEAK_START <= peak_ts <= EXPECTED_PEAK_END
-                if in_window:
-                    results.append(("Peak time ~06:50-07:00 UTC", True,
-                                   f"Peak at {peak_ts.strftime('%H:%M:%S')} UTC, flux={peak_val:.2e}"))
+                time_diff = abs((peak_ts - EXPECTED_PEAK_TIME).total_seconds())
+                flux_diff = abs(peak_val - EXPECTED_PEAK_FLUX)
+                
+                if time_diff <= 30 and flux_diff < 100:
+                    results.append(("Peak time ~06:50:45 UTC", True,
+                                   f"Peak at {peak_ts.strftime('%H:%M:%S')} UTC, flux={peak_val:.0f} (Expected ~19937)"))
                 else:
-                    results.append(("Peak time ~06:50-07:00 UTC", False,
+                    results.append(("Peak time ~06:50:45 UTC", False,
                                    f"⚠ Peak at {peak_ts.strftime('%Y-%m-%d %H:%M:%S')} UTC "
-                                   f"(flux={peak_val:.2e}). "
-                                   f"Expected 06:50-07:00 UTC. "
-                                   f"Check MJDREFI/MJDREFF timestamp conversion!"))
+                                   f"(flux={peak_val:.0f}). "
+                                   f"Expected ~06:50:45 UTC with flux ~19937."))
             else:
-                results.append(("Peak time ~06:50-07:00 UTC", False, "No valid flux values"))
+                results.append(("Peak time ~06:50:45 UTC", False, "No valid flux values"))
         except Exception as e:
-            results.append(("Peak time ~06:50-07:00 UTC", False, f"Error: {e}"))
+            results.append(("Peak time ~06:50:45 UTC", False, f"Error: {e}"))
 
     # ── Check 7: is_real_data flag ──
     is_real = data.get("is_real_data", None)
@@ -138,6 +139,20 @@ def verify_file(filepath: Path, instrument: str) -> list:
         results.append(("is_real_data = True", False, "Flag is False — synthetic data?"))
     else:
         results.append(("is_real_data = True", False, "Flag missing from JSON"))
+
+    # ── Check 8: HEL1OS covers SoLEXS peak time ──
+    if instrument == "HEL1OS" and timestamps:
+        try:
+            first_ts_str = timestamps[0]
+            last_ts_str = timestamps[-1]
+            peak_str = EXPECTED_PEAK_TIME.strftime('%Y-%m-%dT%H:%M:%S')
+            
+            if first_ts_str <= peak_str and last_ts_str >= peak_str:
+                results.append(("Covers SoLEXS peak (06:50:45)", True, f"Range: {first_ts_str[11:19]} to {last_ts_str[11:19]} UTC"))
+            else:
+                results.append(("Covers SoLEXS peak (06:50:45)", False, f"⚠ GAP DETECTED! Range: {first_ts_str[11:19]} to {last_ts_str[11:19]} UTC (Misses 06:50:45)"))
+        except Exception as e:
+            results.append(("Covers SoLEXS peak (06:50:45)", False, f"Error: {e}"))
 
     return results
 

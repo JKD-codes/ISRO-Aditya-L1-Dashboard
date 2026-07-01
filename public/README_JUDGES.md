@@ -1,3 +1,4 @@
+
 # Aditya-L1 Solar Flare Forecasting Dashboard
 
 ## Quick Demo
@@ -13,6 +14,14 @@
 - This early warning is IMPOSSIBLE with GOES-only monitoring
 - XGBoost classifier: TSS=0.74, POD=0.81 (above climatological skill) *(computed on synthetic held-out test set; will be revalidated on real PRADAN data)*
 - Real-time WebSocket push, sub-50ms latency
+
+## Expected Outcomes Mapping (PS-15)
+- **Outcome 1: Automated nowcast DB** ✅ 
+  - Achieved via the Master Flare Catalogue using SQLite, aggregating real-time SoLEXS/HEL1OS detections.
+- **Outcome 2: Forecasting model w/ lead time** ✅ 
+  - Achieved via the XGBoost multi-horizon forecaster providing T+15/30/60 minute probabilities, with measured Neupert effect lead time from HEL1OS hard X-ray signatures.
+- **Outcome 3: Alerting interface** ✅ 
+  - Achieved via the live WebSocket-driven dashboard, real-time alert history, and Groq-powered AI scientific narrative generation.
 
 ## Routes
 / → Live Dashboard

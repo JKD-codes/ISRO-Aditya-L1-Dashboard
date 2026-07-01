@@ -28,6 +28,7 @@
     "react-router-dom": "^7.18.0",
     "recharts": "^3.9.0",
     "tailwind-merge": "^3.6.0",
+    "three": "^0.128.0",
     "zustand": "^5.0.14"
   },
   "devDependencies": {

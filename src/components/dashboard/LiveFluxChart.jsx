@@ -230,8 +230,8 @@ export function LiveFluxChart({ showForecast = false }) {
           </div>
         ) : (
           <>
-            <div style={{ flex: '1 1 0%', minHeight: 0, width: '100%' }} ref={chartRef}>
-              <ResponsiveContainer width="100%" height="100%">
+            <div style={{ flex: '1 1 0%', minHeight: 320, width: '100%' }} ref={chartRef}>
+              <ResponsiveContainer width="100%" height={320}>
                 <ComposedChart data={combinedData} margin={{ top: 15, right: 45, left: -20, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,107,0,0.15)" />
                   <XAxis 
