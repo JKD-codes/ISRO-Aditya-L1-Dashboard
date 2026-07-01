@@ -1,9 +1,10 @@
+
 import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { Card } from '../ui/Card';
 import { useStore } from '../../store/useStore';
 import { Layers } from 'lucide-react';
-
+import { SDO_URL } from '../../config';
 export function SolarSimulation() {
   const containerRef = useRef(null);
   const canvasRef = useRef(null);
@@ -28,12 +29,14 @@ export function SolarSimulation() {
     const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 100);
     camera.position.z = 2.8;
 
-    // --- SUN MESH (Invisible Occluder) ---
-    // colorWrite: false makes the sphere invisible but it STILL writes to the depth buffer!
-    // This correctly hides markers when they rotate to the back of the sun.
+    // --- SUN MESH ---
+    const textureLoader = new THREE.TextureLoader();
+    const sunTexture = textureLoader.load('/real_sun.jpg');
+    
     const sunGeometry = new THREE.SphereGeometry(1, 64, 64);
     const sunMaterial = new THREE.MeshBasicMaterial({
-      colorWrite: false,
+      color: 0xff8800, // Very visible fallback color in case of 404
+      map: sunTexture,
       depthWrite: true,
     });
     const sunMesh = new THREE.Mesh(sunGeometry, sunMaterial);
@@ -317,26 +320,7 @@ export function SolarSimulation() {
         className={`flex-1 w-full relative overflow-hidden bg-black ${isDraggingState ? 'cursor-grabbing' : 'cursor-grab'}`} 
         style={{ minHeight: '200px' }}
       >
-        {/* Real NASA Background Image Overlay */}
-        <div 
-          className="absolute inset-0 z-0 flex items-center justify-center pointer-events-none"
-          style={{
-            filter: getFilterStyle(),
-            transition: 'filter 0.6s ease',
-            mixBlendMode: 'screen',
-            opacity: 0.85
-          }}
-        >
-          <img 
-            src="https://sdo.gsfc.nasa.gov/assets/img/latest/latest_1024_0193.jpg" 
-            alt="NASA SDO AIA"
-            className="pointer-events-none rounded-full object-cover"
-            style={{ height: '86.2%', aspectRatio: '1/1' }}
-            crossOrigin="anonymous"
-          />
-        </div>
-
-        {/* Three.js Canvas (Transparent Occluder + Glow + Markers) */}
+        {/* Three.js Canvas (Glow, Texture, and Markers) */}
         <canvas 
           ref={canvasRef} 
           className="absolute inset-0 w-full h-full block z-10"
