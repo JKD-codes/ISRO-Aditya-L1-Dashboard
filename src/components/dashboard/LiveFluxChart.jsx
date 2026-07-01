@@ -230,60 +230,58 @@ export function LiveFluxChart({ showForecast = false }) {
           </div>
         ) : (
           <>
-            <div style={{ flex: '1 1 0%', minHeight: 320, width: '100%' }} ref={chartRef}>
-              <ResponsiveContainer width="100%" height={320}>
-                <ComposedChart data={combinedData} margin={{ top: 15, right: 45, left: -20, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,107,0,0.15)" />
-                  <XAxis 
-                    dataKey="time_tag"
-                    tickFormatter={(t) => new Date(t).toUTCString().slice(17,22)}
-                    stroke="#8FA3C0"
-                    fontSize={8}
-                    fontFamily="monospace"
+            <div style={{ minHeight: 320, width: '100%', overflowX: 'auto' }} ref={chartRef}>
+              <ComposedChart width={800} height={320} data={combinedData} margin={{ top: 15, right: 45, left: -20, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,107,0,0.15)" />
+                <XAxis 
+                  dataKey="time_tag"
+                  tickFormatter={(t) => new Date(t).toUTCString().slice(17,22)}
+                  stroke="#8FA3C0"
+                  fontSize={8}
+                  fontFamily="monospace"
+                />
+                <YAxis 
+                  scale="linear"
+                  domain={[-9, -3]}
+                  ticks={[-9, -8, -7, -6, -5, -4, -3]}
+                  tickFormatter={(v) => `1e${v}`}
+                  stroke="#8FA3C0"
+                  fontSize={8}
+                  fontFamily="monospace"
+                />
+                <Tooltip content={<CustomTooltip />} />
+                
+                <ReferenceArea y1={-5} y2={-4} fill="rgba(255,107,0,0.06)" isFront={false} />
+                <ReferenceArea y1={-4} y2={-3} fill="rgba(255,59,59,0.08)" isFront={false} />
+
+                <ReferenceLine y={-7} stroke="#2E3D52" strokeDasharray="2 2" label={{ value: 'B', fill: '#8FA3C0', position: 'right', fontSize: 8, fontFamily: 'monospace' }} />
+                <ReferenceLine y={-6} stroke="#4FC3F7" strokeDasharray="3 3" label={{ value: 'C', fill: '#4FC3F7', position: 'right', fontSize: 8, fontFamily: 'monospace' }} />
+                <ReferenceLine y={-5} stroke="#FFB347" strokeDasharray="3 3" label={{ value: 'M', fill: '#FFB347', position: 'right', fontSize: 8, fontFamily: 'monospace' }} />
+                <ReferenceLine y={-4} stroke="#FF3B3B" strokeDasharray="3 3" label={{ value: 'X', fill: '#FF3B3B', position: 'right', fontSize: 8, fontFamily: 'monospace' }} />
+
+                {showForecast && parsedData.length > 0 && (
+                  <ReferenceLine 
+                    x={parsedData[parsedData.length - 1].time_tag} 
+                    stroke="#00E5A0" 
+                    strokeDasharray="4 4"
+                    label={{ value: 'NOW', fill: '#00E5A0', position: 'top', fontSize: 10, fontFamily: 'monospace' }} 
                   />
-                  <YAxis 
-                    scale="linear"
-                    domain={[-9, -3]}
-                    ticks={[-9, -8, -7, -6, -5, -4, -3]}
-                    tickFormatter={(v) => `1e${v}`}
-                    stroke="#8FA3C0"
-                    fontSize={8}
-                    fontFamily="monospace"
-                  />
-                  <Tooltip content={<CustomTooltip />} />
-                  
-                  <ReferenceArea y1={-5} y2={-4} fill="rgba(255,107,0,0.06)" isFront={false} />
-                  <ReferenceArea y1={-4} y2={-3} fill="rgba(255,59,59,0.08)" isFront={false} />
+                )}
 
-                  <ReferenceLine y={-7} stroke="#2E3D52" strokeDasharray="2 2" label={{ value: 'B', fill: '#8FA3C0', position: 'right', fontSize: 8, fontFamily: 'monospace' }} />
-                  <ReferenceLine y={-6} stroke="#4FC3F7" strokeDasharray="3 3" label={{ value: 'C', fill: '#4FC3F7', position: 'right', fontSize: 8, fontFamily: 'monospace' }} />
-                  <ReferenceLine y={-5} stroke="#FFB347" strokeDasharray="3 3" label={{ value: 'M', fill: '#FFB347', position: 'right', fontSize: 8, fontFamily: 'monospace' }} />
-                  <ReferenceLine y={-4} stroke="#FF3B3B" strokeDasharray="3 3" label={{ value: 'X', fill: '#FF3B3B', position: 'right', fontSize: 8, fontFamily: 'monospace' }} />
+                {showForecast && (
+                  <>
+                    <Line className="forecast-line" type="monotone" dataKey="log_forecastLow" stroke="rgba(255,179,71,0.2)" strokeWidth={1} strokeDasharray="3 3" dot={false} isAnimationActive={false} connectNulls={true} />
+                    <Line className="forecast-line" type="monotone" dataKey="log_forecastHigh" stroke="rgba(255,179,71,0.2)" strokeWidth={1} strokeDasharray="3 3" dot={false} isAnimationActive={false} connectNulls={true} />
+                  </>
+                )}
 
-                  {showForecast && parsedData.length > 0 && (
-                    <ReferenceLine 
-                      x={parsedData[parsedData.length - 1].time_tag} 
-                      stroke="#00E5A0" 
-                      strokeDasharray="4 4"
-                      label={{ value: 'NOW', fill: '#00E5A0', position: 'top', fontSize: 10, fontFamily: 'monospace' }} 
-                    />
-                  )}
-
-                  {showForecast && (
-                    <>
-                      <Line className="forecast-line" type="monotone" dataKey="log_forecastLow" stroke="rgba(255,179,71,0.2)" strokeWidth={1} strokeDasharray="3 3" dot={false} isAnimationActive={false} connectNulls={true} />
-                      <Line className="forecast-line" type="monotone" dataKey="log_forecastHigh" stroke="rgba(255,179,71,0.2)" strokeWidth={1} strokeDasharray="3 3" dot={false} isAnimationActive={false} connectNulls={true} />
-                    </>
-                  )}
-
-                  <Line type="monotone" dataKey="log_xrsb" stroke="#FFB347" strokeWidth={1.5} dot={false} activeDot={{ r: 4 }} isAnimationActive={false} connectNulls={true} />
-                  <Line type="monotone" dataKey="log_xrsa" stroke="#4FC3F7" strokeWidth={1} dot={false} activeDot={{ r: 3 }} isAnimationActive={false} connectNulls={true} />
-                  
-                  {showForecast && (
-                    <Line className="forecast-line" type="monotone" dataKey="log_forecastXrsb" stroke="#FFB347" strokeDasharray="5 5" strokeWidth={1.5} dot={false} isAnimationActive={false} connectNulls={true} />
-                  )}
-                </ComposedChart>
-              </ResponsiveContainer>
+                <Line type="monotone" dataKey="log_xrsb" stroke="#FFB347" strokeWidth={1.5} dot={false} activeDot={{ r: 4 }} isAnimationActive={false} connectNulls={true} />
+                <Line type="monotone" dataKey="log_xrsa" stroke="#4FC3F7" strokeWidth={1} dot={false} activeDot={{ r: 3 }} isAnimationActive={false} connectNulls={true} />
+                
+                {showForecast && (
+                  <Line className="forecast-line" type="monotone" dataKey="log_forecastXrsb" stroke="#FFB347" strokeDasharray="5 5" strokeWidth={1.5} dot={false} isAnimationActive={false} connectNulls={true} />
+                )}
+              </ComposedChart>
             </div>
             
             <div className="mt-2 text-center border-t border-border-subtle/50 pt-2 shrink-0">
