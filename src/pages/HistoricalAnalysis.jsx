@@ -39,7 +39,7 @@ export function HistoricalAnalysis() {
     setError(null);
     try {
       const data = await getGoesFlares();
-      setFlares(data || []);
+      setFlares(Array.isArray(data) ? data : []);
       setLoading(false);
     } catch (err) {
       console.error("Error fetching flares in HistoricalAnalysis:", err);
@@ -74,7 +74,7 @@ export function HistoricalAnalysis() {
 
   // Derived filtered data
   const filteredFlares = useMemo(() => {
-    if (!flares) return [];
+    if (!Array.isArray(flares)) return [];
     let result = [...flares].reverse(); // Latest first
 
     // Filter by Date Range

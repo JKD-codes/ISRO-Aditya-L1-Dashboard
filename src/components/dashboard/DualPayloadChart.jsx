@@ -4,13 +4,29 @@ import { Card } from '../ui/Card';
 import { useStore } from '../../store/useStore';
 import { useGSAPEntrance } from '../../hooks/useGSAPEntrance';
 
-export function DualPayloadChart({ title, dataSource }) {
+export function DualPayloadChart({ title, dataSource, data }) {
   const { solexsData, heliosData, pipelineNowcast } = useStore();
   const neupertResult = pipelineNowcast?.detection;
   
   const containerRef = useGSAPEntrance({ y: 30, duration: 0.8 });
 
   const chartData = useMemo(() => {
+    if (data && data.solexs && data.helios) {
+      const combined = [];
+      const len = Math.min(data.solexs.length, data.helios.length);
+      for (let i = 0; i < len; i++) {
+        const timeStr = data.solexs[i].time_tag;
+        const t = new Date(timeStr).getTime();
+        combined.push({
+          time: t,
+          formattedTime: new Date(timeStr).toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+          softXray: data.solexs[i].flux,
+          hardXray: data.helios[i].counts_per_sec || data.helios[i].flux || 0
+        });
+      }
+      return combined;
+    }
+
     if (!solexsData?.timestamps || !heliosData?.timestamps) return [];
     
     const combined = [];
@@ -26,7 +42,7 @@ export function DualPayloadChart({ title, dataSource }) {
       });
     }
     return combined;
-  }, [solexsData, heliosData]);
+  }, [data, solexsData, heliosData]);
 
   // Determine the reference line X-coordinate for Neupert Effect
   let neupertPoint = null;

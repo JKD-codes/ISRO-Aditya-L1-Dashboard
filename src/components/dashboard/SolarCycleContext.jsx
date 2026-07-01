@@ -12,7 +12,7 @@ export function SolarCycleContext() {
   });
 
   const parsedData = useMemo(() => {
-    if (!cycleData || cycleData.length === 0) return [];
+    if (!Array.isArray(cycleData) || cycleData.length === 0) return [];
     
     // Filter from 2019 onwards
     const filtered = cycleData.filter(d => {
