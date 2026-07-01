@@ -4,7 +4,7 @@ import { Code, Database, FileText, Globe, Cpu } from 'lucide-react';
 
 export function About() {
   return (
-    <div className="h-full flex flex-col gap-6 overflow-y-auto pb-6 pr-2">
+    <div className="flex flex-col gap-6 pb-6 pr-2">
       
       {/* SECTION A: ADITYA-L1 MISSION OVERVIEW CARD */}
       <Card title="ADITYA-L1 MISSION OVERVIEW" className="p-0">
